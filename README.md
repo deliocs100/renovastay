@@ -1,5 +1,3 @@
-cat > /mnt/user-data/outputs/renovastay.html << 'HTMLEOF'
-<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -572,9 +570,9 @@ footer{padding:4rem 5vw 2rem;background:var(--navy2);border-top:1px solid var(--
         <label>Secteur Moselle</label>
         <select id="simZone" onchange="calcSim()">
           <option value="metz">Metz & agglomération</option>
-          <option value="thionville">Thionville & vallée</option>
-          <option value="sarreguemines">Sarreguemines & Est</option>
-          <option value="forbach">Forbach & bassin</option>
+          <option value="thionville">Luxembourg et Frontière</option>
+          <option value="sarreguemines">Sarreguemines</option>
+          <option value="forbach">Forbach & St avold</option>
           <option value="rural">Zone rurale / autre</option>
         </select>
       </div>
@@ -617,9 +615,9 @@ footer{padding:4rem 5vw 2rem;background:var(--navy2);border-top:1px solid var(--
       <p>Nous intervenons sur l'ensemble du département de la Moselle et ses alentours, avec une connaissance fine du marché local.</p>
       <div class="zone-cities">
         <div class="zcity">Metz &amp; agglomération</div>
-        <div class="zcity">Thionville &amp; vallée de la Moselle</div>
+        <div class="zcity">Luxembourg &amp; vallée de la Moselle</div>
         <div class="zcity">Sarreguemines &amp; Est mosellan</div>
-        <div class="zcity">Forbach &amp; bassin houiller</div>
+        <div class="zcity">Forbach &amp; St avold</div>
         <div class="zcity">Ensemble du département 57</div>
       </div>
       <div style="margin-top:2rem;padding:1.5rem;border:1px solid var(--border2);background:var(--navy2)">
