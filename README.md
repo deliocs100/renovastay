@@ -1,975 +1,1669 @@
+cat > /mnt/user-data/outputs/index.html << 'ENDOFFILE'
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Renova·Stay — Gestion Locative Nouvelle Génération · Moselle</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>Renova Stay — Gestion Locative Nouvelle Génération · Moselle</title>
+<meta name="description" content="Renova Stay accompagne les propriétaires en Moselle dans l'optimisation, l'exploitation et la gestion quotidienne de leurs locations courte durée.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --navy:#0B1629;
-  --navy2:#0F1E38;
-  --navy3:#162644;
-  --navy4:#1E3358;
-  --gold:#C4993A;
-  --gold2:#E2B94A;
-  --gold3:#F5D878;
-  --gold-dim:rgba(196,153,58,0.15);
-  --text:#F0EDE6;
-  --text2:#A8B4C8;
-  --text3:#6B7F99;
-  --white:#FFFFFF;
-  --border:rgba(196,153,58,0.18);
-  --border2:rgba(196,153,58,0.08);
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════════════════════════ */
+:root {
+  --ink:        #03060C;
+  --deep:       #050A14;
+  --navy:       #07101E;
+  --navy2:      #0B1626;
+  --navy3:      #0F1C30;
+  --navy4:      #152338;
+  --navy5:      #1A2A42;
+
+  --gold:       #C8A84B;
+  --gold2:      #DDB95E;
+  --gold3:      #EDD080;
+  --gold4:      #F7E9B0;
+  --goldA6:     rgba(200,168,75,.06);
+  --goldA10:    rgba(200,168,75,.10);
+  --goldA15:    rgba(200,168,75,.15);
+  --goldA25:    rgba(200,168,75,.25);
+  --goldA40:    rgba(200,168,75,.40);
+  --goldGlow:   rgba(200,168,75,.35);
+
+  --w100: rgba(255,255,255,1.00);
+  --w90:  rgba(255,255,255,0.90);
+  --w70:  rgba(255,255,255,0.70);
+  --w50:  rgba(255,255,255,0.50);
+  --w30:  rgba(255,255,255,0.30);
+  --w15:  rgba(255,255,255,0.15);
+  --w08:  rgba(255,255,255,0.08);
+  --w04:  rgba(255,255,255,0.04);
+  --w02:  rgba(255,255,255,0.02);
+
+  --border:   rgba(200,168,75,.10);
+  --borderHi: rgba(200,168,75,.28);
+  --borderXHi:rgba(200,168,75,.50);
+
+  --r12: 12px;  --r16: 16px;  --r20: 20px;
+  --r24: 24px;  --r28: 28px;  --r32: 32px;
+
+  --ease-out: cubic-bezier(.16,1,.3,1);
+  --ease-in-out: cubic-bezier(.76,0,.24,1);
 }
-html{scroll-behavior:smooth}
-body{background:var(--navy);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;cursor:none}
 
-/* ─── CURSOR ─── */
-#cur{position:fixed;width:10px;height:10px;background:var(--gold);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .25s,height .25s,background .25s}
-#cur-ring{position:fixed;width:36px;height:36px;border:1px solid rgba(196,153,58,.5);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%)}
-body.cur-hover #cur{width:20px;height:20px;background:var(--gold2)}
-body.cur-hover #cur-ring{width:52px;height:52px;border-color:rgba(196,153,58,.8)}
+/* ═══════════════════════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--ink);
+  color: var(--w70);
+  overflow-x: hidden;
+  cursor: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+::selection { background: var(--gold); color: var(--navy); }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: var(--ink); }
+::-webkit-scrollbar-thumb { background: linear-gradient(to bottom, var(--gold), var(--gold2)); border-radius: 2px; }
+a, button { cursor: none; }
 
-/* ─── PROGRESS BAR ─── */
-#progress{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--gold3));width:0%;z-index:10001;transition:width .1s}
+/* ═══════════════════════════════════════════════════════════════
+   CUSTOM CURSOR — GOLD DOT + RING
+═══════════════════════════════════════════════════════════════ */
+#cursor-dot {
+  position: fixed;
+  top: 0; left: 0;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--gold);
+  pointer-events: none;
+  z-index: 10000;
+  transform: translate(-50%, -50%);
+  transition: width .2s var(--ease-out), height .2s var(--ease-out), background .2s, opacity .2s;
+  will-change: transform;
+  box-shadow: 0 0 8px var(--goldA40), 0 0 20px var(--goldA25);
+}
+#cursor-ring {
+  position: fixed;
+  top: 0; left: 0;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold);
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: width .45s var(--ease-out), height .45s var(--ease-out), opacity .3s, border-color .3s;
+  opacity: 0.45;
+  will-change: transform;
+}
+#cursor-label {
+  position: fixed;
+  top: 0; left: 0;
+  pointer-events: none;
+  z-index: 9998;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0;
+  transform: translate(-50%, 26px);
+  transition: opacity .25s;
+  white-space: nowrap;
+}
+body.cursor-hover #cursor-dot   { width: 6px; height: 6px; }
+body.cursor-hover #cursor-ring  { width: 56px; height: 56px; opacity: .2; }
+body.cursor-cta   #cursor-dot   { width: 6px; height: 6px; background: var(--gold2); }
+body.cursor-cta   #cursor-ring  { width: 72px; height: 72px; opacity: .15; border-color: var(--gold2); }
+body.cursor-cta   #cursor-label { opacity: 1; }
+body.cursor-click #cursor-dot   { transform: translate(-50%,-50%) scale(.5); }
+body.cursor-video #cursor-ring  { width: 80px; height: 80px; border-width: 1px; }
 
-/* ─── LOADING ─── */
-#loader{position:fixed;inset:0;background:var(--navy);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2rem;transition:opacity .7s,visibility .7s}
-#loader.out{opacity:0;visibility:hidden}
-.loader-logo{font-family:'Playfair Display',serif;font-size:2.2rem;color:var(--gold);letter-spacing:.05em}
-.loader-logo span{font-style:italic;color:var(--text)}
-.loader-track{width:180px;height:1px;background:rgba(255,255,255,.08);position:relative;overflow:hidden}
-.loader-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold3));width:0;transition:width .05s linear}
-.loader-pct{font-size:.65rem;letter-spacing:.3em;color:var(--text3)}
+/* ═══════════════════════════════════════════════════════════════
+   PAGE LOADER
+═══════════════════════════════════════════════════════════════ */
+#page-loader {
+  position: fixed; inset: 0; z-index: 9000;
+  background: var(--ink);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2.5rem;
+  transition: opacity .9s var(--ease-out), visibility .9s;
+}
+#page-loader.loaded { opacity: 0; visibility: hidden; pointer-events: none; }
 
-/* ─── CANVAS PARTICLES ─── */
-#stars{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.7}
+.loader-wordmark {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2rem; font-weight: 500;
+  letter-spacing: .16em; color: var(--w30);
+}
+.loader-wordmark span { color: var(--gold); }
 
-/* ─── NAV ─── */
-nav{position:fixed;top:0;left:0;right:0;z-index:1000;padding:1.4rem 5vw;display:flex;align-items:center;justify-content:space-between;transition:background .4s,backdrop-filter .4s,padding .4s}
-nav.stuck{background:rgba(11,22,41,.93);backdrop-filter:blur(14px);padding:1rem 5vw;border-bottom:1px solid var(--border2)}
-.logo{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--text);text-decoration:none;letter-spacing:.02em}
-.logo b{color:var(--gold);font-weight:700}
-.logo span{font-style:italic;font-weight:400}
-.nav-links{display:flex;gap:2.5rem;list-style:none}
-.nav-links a{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--text2);text-decoration:none;transition:color .3s;font-weight:500}
-.nav-links a:hover{color:var(--gold)}
-.nav-cta{font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;border:1px solid var(--gold);color:var(--gold);padding:.55rem 1.4rem;background:transparent;cursor:none;font-family:'DM Sans',sans-serif;font-weight:500;transition:all .3s}
-.nav-cta:hover{background:var(--gold);color:var(--navy)}
-.burger{display:none;flex-direction:column;gap:5px;cursor:none;width:28px;padding:4px 0}
-.burger span{height:1px;background:var(--text);transition:all .4s;display:block}
-.burger.open span:nth-child(1){transform:translateY(6px) rotate(45deg)}
-.burger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
-.burger.open span:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
-.mob-menu{display:none;position:fixed;inset:0;background:var(--navy);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:2.5rem;opacity:0;transition:opacity .4s}
-.mob-menu.open{display:flex;opacity:1}
-.mob-menu a{font-family:'Playfair Display',serif;font-size:2rem;color:var(--text);text-decoration:none;font-style:italic;transition:color .3s}
-.mob-menu a:hover{color:var(--gold)}
+.loader-progress-wrap {
+  width: 200px; height: 1px;
+  background: var(--w04); border-radius: 1px; overflow: hidden;
+}
+.loader-progress-bar {
+  height: 100%; width: 0;
+  background: linear-gradient(90deg, var(--gold), var(--gold3));
+  border-radius: 1px;
+  transition: width .08s linear;
+}
+.loader-pct {
+  font-size: .65rem; font-weight: 600;
+  letter-spacing: .1em; color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
 
-/* ─── FLOATING ACTIONS ─── */
-.float-bar{position:fixed;bottom:2rem;right:2rem;display:flex;flex-direction:column;gap:.8rem;z-index:900}
-.fab{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:none;transition:transform .3s,box-shadow .3s;text-decoration:none;border:none}
-.fab:hover{transform:scale(1.12)}
-.fab-wa{background:#25D366}
-.fab-mail{background:var(--gold)}
-.fab svg{width:20px;height:20px;fill:white;stroke:none}
-.fab-label{position:absolute;right:58px;background:var(--navy2);color:var(--text);font-size:.65rem;letter-spacing:.1em;padding:.3rem .7rem;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;border:1px solid var(--border)}
-.fab:hover .fab-label{opacity:1}
+/* ═══════════════════════════════════════════════════════════════
+   FLOATING PARTICLES CANVAS
+═══════════════════════════════════════════════════════════════ */
+#particles-canvas {
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: .35;
+}
 
-/* ─── HERO ─── */
-#hero{min-height:100vh;display:flex;align-items:center;padding:0 5vw;position:relative;overflow:hidden}
-.hero-bg-grad{position:absolute;inset:0;background:radial-gradient(ellipse 75% 65% at 65% 45%,rgba(196,153,58,.07) 0%,transparent 65%)}
-.hero-grid-lines{position:absolute;inset:0;overflow:hidden;opacity:.025;pointer-events:none}
-.hero-grid-lines svg{width:100%;height:100%}
-.hero-inner{position:relative;z-index:1;max-width:800px}
-.hero-eyebrow{display:inline-flex;align-items:center;gap:.7rem;font-size:.65rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);border:1px solid var(--border);padding:.4rem 1rem .4rem .8rem;margin-bottom:2.5rem;opacity:0;animation:fadeUp .9s .3s ease forwards}
-.hero-eyebrow::before{content:'';width:6px;height:6px;background:var(--gold);border-radius:50%;animation:blink 2s infinite}
-.hero-h1{font-family:'Playfair Display',serif;font-size:clamp(2.8rem,6vw,5.5rem);line-height:1.07;margin-bottom:1.6rem;opacity:0;animation:fadeUp .9s .5s ease forwards}
-.hero-h1 em{font-style:italic;color:var(--gold)}
-.hero-p{font-size:.95rem;color:var(--text2);line-height:1.9;max-width:520px;font-weight:300;margin-bottom:2.8rem;opacity:0;animation:fadeUp .9s .7s ease forwards}
-.hero-btns{display:flex;gap:1.2rem;flex-wrap:wrap;opacity:0;animation:fadeUp .9s .9s ease forwards}
-.btn-primary{background:var(--gold);color:var(--navy);border:none;padding:.85rem 2.2rem;font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;cursor:none;font-family:'DM Sans',sans-serif;font-weight:600;position:relative;overflow:hidden;transition:box-shadow .3s}
-.btn-primary::after{content:'';position:absolute;inset:0;background:var(--gold3);transform:scaleX(0);transform-origin:left;transition:transform .35s}
-.btn-primary:hover{box-shadow:0 8px 32px rgba(196,153,58,.35)}
-.btn-primary:hover::after{transform:scaleX(1)}
-.btn-primary span{position:relative;z-index:1}
-.btn-secondary{background:transparent;color:var(--text);border:1px solid rgba(240,237,230,.2);padding:.85rem 2.2rem;font-size:.75rem;letter-spacing:.15em;text-transform:uppercase;cursor:none;font-family:'DM Sans',sans-serif;font-weight:400;transition:all .3s}
-.btn-secondary:hover{border-color:var(--gold);color:var(--gold)}
-.hero-badges{display:flex;gap:1.5rem;margin-top:3rem;flex-wrap:wrap;opacity:0;animation:fadeUp .9s 1.1s ease forwards}
-.hbadge{display:flex;align-items:center;gap:.6rem;font-size:.72rem;color:var(--text2);font-weight:300}
-.hbadge::before{content:'';width:6px;height:6px;background:var(--gold);border-radius:50%;flex-shrink:0}
-.hbadge.active::after{content:'Active';font-size:.55rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);border:1px solid var(--border);padding:.15rem .5rem;margin-left:.3rem}
-.hero-scroll{position:absolute;bottom:2.2rem;left:5vw;display:flex;align-items:center;gap:.8rem;opacity:0;animation:fadeUp .9s 1.3s ease forwards}
-.scroll-line{width:40px;height:1px;background:linear-gradient(90deg,var(--gold),transparent)}
-.scroll-txt{font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;color:var(--text3)}
+/* ═══════════════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════════════ */
+.nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 5vw; height: 84px;
+  transition: height .5s var(--ease-out), background .5s, box-shadow .5s, backdrop-filter .5s;
+}
+.nav.scrolled {
+  height: 66px;
+  background: rgba(3,6,12,.94);
+  backdrop-filter: blur(32px) saturate(1.6);
+  box-shadow: 0 1px 0 var(--border), 0 16px 48px rgba(0,0,0,.55);
+}
+.nav-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem; font-weight: 600;
+  letter-spacing: .1em; color: var(--w100);
+  text-decoration: none; display: flex; align-items: center;
+  transition: opacity .25s;
+}
+.nav-logo:hover { opacity: .75; }
+.nav-logo-sep { color: var(--gold); margin: 0 2px; }
 
-/* ─── TICKER ─── */
-.ticker-wrap{overflow:hidden;border-top:1px solid var(--border2);border-bottom:1px solid var(--border2);padding:.7rem 0;background:var(--navy2)}
-.ticker-inner{display:flex;gap:3rem;white-space:nowrap;animation:ticker 25s linear infinite}
-.ticker-item{font-size:.65rem;letter-spacing:.22em;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:.7rem;flex-shrink:0}
-.ticker-dot{width:4px;height:4px;background:var(--gold);border-radius:50%;flex-shrink:0}
+.nav-menu { display: flex; gap: 2.5rem; list-style: none; }
+.nav-menu a {
+  font-size: .72rem; font-weight: 500;
+  letter-spacing: .13em; text-transform: uppercase;
+  color: var(--w30); text-decoration: none;
+  transition: color .25s; position: relative; padding-bottom: 2px;
+}
+.nav-menu a::after {
+  content: ''; position: absolute; bottom: -3px; left: 0; right: 0;
+  height: 1px; background: var(--gold);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform .35s var(--ease-out);
+}
+.nav-menu a:hover { color: var(--gold2); }
+.nav-menu a:hover::after { transform: scaleX(1); }
 
-/* ─── SECTION COMMONS ─── */
-section{padding:7rem 5vw;position:relative}
-.s-tag{display:flex;align-items:center;gap:.8rem;font-size:.62rem;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-bottom:1rem}
-.s-tag::before{content:'';width:28px;height:1px;background:var(--gold)}
-.s-title{font-family:'Playfair Display',serif;font-size:clamp(2rem,4vw,3.2rem);line-height:1.15;margin-bottom:1rem}
-.s-title em{font-style:italic;color:var(--gold)}
-.s-sub{font-size:.85rem;color:var(--text2);line-height:1.9;font-weight:300;max-width:560px}
+.nav-cta {
+  position: relative; overflow: hidden;
+  display: inline-flex; align-items: center; gap: .5rem;
+  background: transparent; border: 1px solid var(--borderHi);
+  color: var(--gold); padding: .65rem 1.5rem; border-radius: 100px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .72rem; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  text-decoration: none;
+  transition: color .35s, border-color .35s, box-shadow .35s;
+}
+.nav-cta::before {
+  content: ''; position: absolute; inset: 0;
+  background: var(--gold);
+  transform: translateX(-101%);
+  transition: transform .4s var(--ease-out);
+  border-radius: 100px;
+}
+.nav-cta span { position: relative; z-index: 1; display: flex; align-items: center; gap: .5rem; }
+.nav-cta:hover { color: var(--navy); border-color: var(--gold); box-shadow: 0 0 32px var(--goldA25); }
+.nav-cta:hover::before { transform: translateX(0); }
 
-/* ─── SERVICES ─── */
-#services{background:var(--navy2)}
-.services-header{max-width:700px;margin-bottom:4rem}
-.services-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border2)}
-.svc{background:var(--navy2);padding:3rem 2.8rem;position:relative;overflow:hidden;cursor:none;transition:background .4s}
-.svc:hover{background:var(--navy3)}
-.svc-top-line{position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--gold),transparent);transform:scaleX(0);transform-origin:left;transition:transform .5s}
-.svc:hover .svc-top-line{transform:scaleX(1)}
-.svc-num{font-family:'Playfair Display',serif;font-size:.8rem;color:var(--gold);margin-bottom:1.5rem;letter-spacing:.1em}
-.svc-label{font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:var(--text3);margin-bottom:.5rem}
-.svc-title{font-family:'Playfair Display',serif;font-size:1.4rem;margin-bottom:1.2rem;line-height:1.2}
-.svc-desc{font-size:.8rem;color:var(--text2);line-height:1.9;font-weight:300}
-.svc-ghost{position:absolute;right:-1rem;bottom:-2rem;font-family:'Playfair Display',serif;font-size:9rem;color:var(--gold);opacity:.025;line-height:1;pointer-events:none;user-select:none;transition:opacity .4s}
-.svc:hover .svc-ghost{opacity:.06}
-.platforms{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:3rem}
-.plat{font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;border:1px solid var(--border);color:var(--text2);padding:.35rem .9rem}
+/* ═══════════════════════════════════════════════════════════════
+   HERO — VIDEO BG + TYPEWRITER + ROTATING WORDS
+═══════════════════════════════════════════════════════════════ */
+.hero {
+  position: relative; min-height: 100vh;
+  display: flex; align-items: center;
+  overflow: hidden;
+}
 
-/* ─── VALEUR ─── */
-#valeur{background:var(--navy)}
-.valeur-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:4rem}
-.val-card{border:1px solid var(--border2);padding:2.5rem 2rem;position:relative;overflow:hidden;cursor:none;transition:border-color .4s,transform .4s}
-.val-card:hover{border-color:rgba(196,153,58,.4);transform:translateY(-4px)}
-.val-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at top left,rgba(196,153,58,.06),transparent 60%);opacity:0;transition:opacity .4s}
-.val-card:hover::before{opacity:1}
-.val-icon{width:44px;height:44px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin-bottom:1.8rem;font-size:1.2rem}
-.val-num{font-family:'Playfair Display',serif;font-size:.75rem;color:var(--gold);margin-bottom:.6rem;letter-spacing:.1em}
-.val-title{font-family:'Playfair Display',serif;font-size:1.2rem;margin-bottom:.9rem}
-.val-desc{font-size:.78rem;color:var(--text2);line-height:1.9;font-weight:300}
+.hero-video-wrap {
+  position: absolute; inset: 0; z-index: 0;
+}
+.hero-video-wrap::after {
+  content: ''; position: absolute; inset: 0;
+  background:
+    linear-gradient(to right, rgba(3,6,12,.88) 35%, rgba(3,6,12,.45) 70%, rgba(3,6,12,.7) 100%),
+    linear-gradient(to top, rgba(3,6,12,.8) 0%, transparent 40%);
+}
+.hero-video {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+  filter: brightness(.5) saturate(.7);
+  transition: opacity 1.2s ease;
+}
+/* Fallback mesh when no video */
+.hero-mesh-fallback {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 70% at 75% 40%, rgba(200,168,75,.055) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 10% 90%, rgba(7,16,30,.9) 0%, transparent 60%),
+    linear-gradient(155deg, #03060C 0%, #07101E 55%, #03060C 100%);
+}
 
-/* ─── PROCESSUS ─── */
-#processus{background:var(--navy2)}
-.process-wrap{display:grid;grid-template-columns:1fr 1fr;gap:6rem;align-items:start;margin-top:4rem}
-.process-steps{display:flex;flex-direction:column;gap:0}
-.ps{border-bottom:1px solid var(--border2);padding:1.8rem 0;cursor:none;transition:padding .3s}
-.ps:hover,.ps.act{padding-left:.8rem}
-.ps:hover .ps-num,.ps.act .ps-num{color:var(--gold)}
-.ps-row{display:flex;align-items:center;gap:1.2rem}
-.ps-num{font-family:'Playfair Display',serif;font-size:.8rem;color:var(--text3);transition:color .3s;width:2rem;flex-shrink:0}
-.ps-name{font-size:.95rem;font-weight:500}
-.ps-body{font-size:.78rem;color:var(--text2);line-height:1.9;font-weight:300;padding-left:3.2rem;margin-top:.7rem;display:none}
-.ps.act .ps-body{display:block}
-.process-visual{position:sticky;top:6rem}
-.pv-box{background:var(--navy3);border:1px solid var(--border2);padding:2.5rem;margin-bottom:1.5rem}
-.pv-title{font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:.5rem}
-.pv-sub{font-size:.75rem;color:var(--text2);line-height:1.8;font-weight:300}
-.pv-checklist{margin-top:1.5rem;display:flex;flex-direction:column;gap:.7rem}
-.pv-check{display:flex;align-items:center;gap:.8rem;font-size:.78rem;color:var(--text2)}
-.pv-check::before{content:'';width:16px;height:16px;border:1px solid var(--gold);flex-shrink:0;background:rgba(196,153,58,.1);display:flex;align-items:center;justify-content:center}
-.pv-check.done::before{background:var(--gold);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%230B1629' stroke-width='3'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:center}
+.hero-grain {
+  position: absolute; inset: 0; z-index: 1; opacity: .028; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.88' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 260px;
+}
 
-/* ─── ZONE / MAP ─── */
-#zone{background:var(--navy)}
-.zone-wrap{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center;margin-top:4rem}
-.zone-text p{font-size:.82rem;color:var(--text2);line-height:1.9;font-weight:300;margin-bottom:1.2rem}
-.zone-cities{display:flex;flex-direction:column;gap:.6rem;margin-top:1.5rem}
-.zcity{display:flex;align-items:center;gap:.8rem;font-size:.78rem;color:var(--text2);padding:.6rem 0;border-bottom:1px solid var(--border2);cursor:none;transition:color .3s,padding .3s}
-.zcity:hover{color:var(--gold);padding-left:.5rem}
-.zcity::before{content:'📍';font-size:.7rem}
-.map-svg-wrap{position:relative;background:var(--navy2);border:1px solid var(--border);padding:1.5rem}
-.map-badge{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text3);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
-.map-pulse{width:7px;height:7px;background:var(--gold);border-radius:50%;animation:blink 1.8s infinite}
+/* Decorative rings */
+.hero-ring {
+  position: absolute; border-radius: 50%;
+  pointer-events: none; z-index: 2;
+  animation: ringPulse 8s ease-in-out infinite;
+}
+.hero-ring-1 {
+  width: 640px; height: 640px;
+  top: 50%; right: 8%;
+  transform: translateY(-50%);
+  border: 1px solid rgba(200,168,75,.055);
+  animation-delay: 0s;
+}
+.hero-ring-2 {
+  width: 460px; height: 460px;
+  top: 50%; right: 8%;
+  transform: translateY(-50%);
+  border: 1px solid rgba(200,168,75,.08);
+  animation-delay: -2s;
+}
+.hero-ring-3 {
+  width: 280px; height: 280px;
+  top: 50%; right: 8%;
+  transform: translateY(-50%);
+  border: 1px solid rgba(200,168,75,.13);
+  animation-delay: -4s;
+}
+@keyframes ringPulse {
+  0%, 100% { opacity: .5; }
+  50% { opacity: 1; }
+}
 
-/* ─── PROPOS ─── */
-#propos{background:var(--navy2)}
-.propos-grid{display:grid;grid-template-columns:1fr 1fr;gap:6rem;align-items:start;margin-top:4rem}
-.propos-quote{font-family:'Playfair Display',serif;font-size:1.15rem;font-style:italic;line-height:1.7;color:var(--text);border-left:2px solid var(--gold);padding-left:1.5rem;margin:2rem 0}
-.propos-p{font-size:.82rem;color:var(--text2);line-height:1.9;font-weight:300;margin-bottom:1.2rem}
-.distinctions{display:flex;flex-direction:column;gap:0}
-.dist{display:flex;align-items:start;gap:1rem;padding:1.2rem 0;border-bottom:1px solid var(--border2)}
-.dist-arrow{color:var(--gold);font-size:.9rem;flex-shrink:0;margin-top:.1rem}
-.dist-text{font-size:.8rem;color:var(--text2);line-height:1.7;font-weight:300}
-.propos-badge{background:var(--navy3);border:1px solid var(--border);padding:2rem;margin-top:2rem}
-.pb-label{font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:var(--text3);margin-bottom:1rem}
-.pb-items{display:flex;flex-direction:column;gap:.7rem}
-.pb-item{display:flex;align-items:center;gap:.8rem;font-size:.78rem;color:var(--text2)}
-.pb-dot{width:6px;height:6px;background:var(--gold);border-radius:50%;flex-shrink:0}
+.hero-content {
+  position: relative; z-index: 3;
+  max-width: 1240px; margin: 0 auto; width: 100%;
+  padding: 140px 5vw 100px;
+  display: grid; grid-template-columns: 1fr 420px;
+  gap: 5vw; align-items: center;
+}
 
-/* ─── SIMULATEUR ─── */
-#simulateur{background:var(--navy3)}
-.sim-wrap{max-width:700px;margin:4rem auto 0}
-.sim-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border2);margin-bottom:1px}
-.sim-field{background:var(--navy2);padding:1.5rem}
-.sim-field label{font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:var(--text3);display:block;margin-bottom:.7rem}
-.sim-field input,.sim-field select{width:100%;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:1.1rem;font-family:'Playfair Display',serif;padding:.3rem 0;outline:none;cursor:none}
-.sim-field select{cursor:none;font-family:'DM Sans',sans-serif;font-size:.85rem}
-.sim-field select option{background:var(--navy2);color:var(--text)}
-.sim-result{background:var(--navy);border:1px solid var(--border);padding:2.5rem;display:flex;justify-content:space-between;align-items:center;gap:2rem}
-.sim-out-label{font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:var(--text3)}
-.sim-out-val{font-family:'Playfair Display',serif;font-size:2.8rem;color:var(--gold);line-height:1.1;margin-top:.3rem}
-.sim-disclaimer{font-size:.65rem;color:var(--text3);margin-top:.5rem;font-style:italic}
-.sim-cta{margin-top:2rem;text-align:center}
+/* Eyebrow */
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: .85rem;
+  font-size: .68rem; font-weight: 600;
+  letter-spacing: .2em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 2.5rem;
+  opacity: 0; animation: animFadeUp .9s .15s var(--ease-out) both;
+}
+.hero-eyebrow-bar { width: 28px; height: 1px; background: var(--gold); flex-shrink: 0; }
 
-/* ─── AUDIT ─── */
-#audit{background:var(--navy);text-align:center}
-.audit-inner{max-width:680px;margin:0 auto}
-.audit-items{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;margin:3rem 0}
-.audit-item{border:1px solid var(--border2);padding:1.5rem 1rem;transition:border-color .3s,transform .3s;cursor:none}
-.audit-item:hover{border-color:rgba(196,153,58,.4);transform:translateY(-3px)}
-.ai-ico{font-size:1.4rem;margin-bottom:.7rem}
-.ai-label{font-size:.7rem;color:var(--text2);letter-spacing:.05em;font-weight:300}
-.audit-cta-wrap{display:flex;flex-direction:column;align-items:center;gap:1rem}
-.audit-note{font-size:.68rem;color:var(--text3);letter-spacing:.05em}
+/* Main heading */
+.hero-h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(3rem, 6vw, 5.8rem);
+  font-weight: 300; line-height: 1.07;
+  color: var(--w100); letter-spacing: -.01em;
+  margin-bottom: 2rem;
+  opacity: 0; animation: animFadeUp 1s .3s var(--ease-out) both;
+}
+.hero-h1-static { display: block; }
+.hero-h1-accent {
+  display: block; font-weight: 500; font-style: italic;
+  background: linear-gradient(125deg, var(--gold4) 0%, var(--gold3) 30%, var(--gold) 70%, var(--gold2) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+}
 
-/* ─── FAQ ─── */
-#faq{background:var(--navy2)}
-.faq-list{margin-top:3.5rem;max-width:800px;margin-left:auto;margin-right:auto}
-.faq-item{border-bottom:1px solid var(--border2)}
-.faq-q{display:flex;justify-content:space-between;align-items:center;padding:1.4rem 0;cursor:none;font-size:.9rem;font-weight:500;transition:color .3s}
-.faq-q:hover{color:var(--gold)}
-.faq-q.open{color:var(--gold)}
-.faq-icon{width:22px;height:22px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .35s,border-color .3s}
-.faq-q.open .faq-icon{transform:rotate(45deg);border-color:rgba(196,153,58,.5)}
-.faq-icon::before{content:'+';font-size:1rem;color:var(--gold);line-height:1}
-.faq-a{font-size:.8rem;color:var(--text2);line-height:1.9;font-weight:300;max-height:0;overflow:hidden;transition:max-height .45s ease,padding .45s}
-.faq-a.open{max-height:300px;padding-bottom:1.4rem}
+/* Rotating word */
+.hero-rotate-wrap {
+  display: inline-block; overflow: hidden;
+  height: 1.1em; vertical-align: bottom;
+}
+.hero-rotate-words {
+  display: flex; flex-direction: column;
+  animation: rotateWords 6s ease-in-out infinite;
+}
+.hero-rotate-word {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(3rem, 6vw, 5.8rem);
+  font-weight: 300; font-style: italic;
+  line-height: 1.07; white-space: nowrap;
+  background: linear-gradient(125deg, var(--gold4) 0%, var(--gold) 60%, var(--gold2) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+@keyframes rotateWords {
+  0%,22%  { transform: translateY(0); }
+  25%,47% { transform: translateY(-100%); }
+  50%,72% { transform: translateY(-200%); }
+  75%,97% { transform: translateY(-300%); }
+  100%    { transform: translateY(-400%); }
+}
 
-/* ─── FOOTER ─── */
-footer{padding:4rem 5vw 2rem;background:var(--navy2);border-top:1px solid var(--border2)}
-.footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:4rem;margin-bottom:3rem}
-.ft-logo{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--text);margin-bottom:1rem}
-.ft-logo b{color:var(--gold)}
-.ft-desc{font-size:.75rem;color:var(--text3);line-height:1.8;font-weight:300;margin-bottom:1rem}
-.ft-contact a{font-size:.75rem;color:var(--gold);text-decoration:none;display:block;margin-bottom:.4rem;transition:color .3s}
-.ft-contact a:hover{color:var(--gold3)}
-.ft-col-title{font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;color:var(--text3);margin-bottom:1.2rem}
-.ft-links{display:flex;flex-direction:column;gap:.6rem}
-.ft-links a{font-size:.75rem;color:var(--text2);text-decoration:none;transition:color .3s;cursor:none}
-.ft-links a:hover{color:var(--gold)}
-.footer-bot{border-top:1px solid var(--border2);padding-top:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
-.footer-copy{font-size:.62rem;color:var(--text3);letter-spacing:.05em}
-.footer-legal{display:flex;gap:2rem}
-.footer-legal a{font-size:.62rem;color:var(--text3);text-decoration:none;transition:color .3s;cursor:none}
-.footer-legal a:hover{color:var(--gold)}
+/* Hero paragraph */
+.hero-p {
+  font-size: 1.02rem; font-weight: 300; color: var(--w50);
+  line-height: 1.9; max-width: 480px; margin-bottom: 3rem;
+  opacity: 0; animation: animFadeUp .9s .5s var(--ease-out) both;
+}
 
-/* ─── CHATBOT ─── */
-#chatbot-btn{position:fixed;bottom:7rem;right:2rem;z-index:900}
-.chat-bubble{width:50px;height:50px;background:var(--navy3);border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:none;transition:all .3s}
-.chat-bubble:hover{border-color:var(--gold);background:var(--navy4)}
-.chat-bubble svg{width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:1.8}
-.chat-panel{position:fixed;bottom:7rem;right:6rem;width:320px;background:var(--navy2);border:1px solid var(--border);display:none;flex-direction:column;z-index:901;overflow:hidden}
-.chat-panel.open{display:flex}
-.chat-head{background:var(--navy3);padding:1rem 1.2rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border2)}
-.chat-head-name{font-size:.85rem;font-weight:500}
-.chat-head-sub{font-size:.62rem;color:var(--gold);letter-spacing:.05em}
-.chat-close{cursor:none;background:none;border:none;color:var(--text2);font-size:1.2rem;line-height:1;transition:color .3s}
-.chat-close:hover{color:var(--gold)}
-.chat-msgs{height:250px;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.8rem}
-.chat-msgs::-webkit-scrollbar{width:3px}
-.chat-msgs::-webkit-scrollbar-track{background:transparent}
-.chat-msgs::-webkit-scrollbar-thumb{background:var(--border)}
-.msg{max-width:82%;font-size:.75rem;line-height:1.6;padding:.6rem .9rem}
-.msg.bot{background:var(--navy3);color:var(--text);align-self:flex-start;border-left:2px solid var(--gold)}
-.msg.user{background:rgba(196,153,58,.12);color:var(--text);align-self:flex-end;border:1px solid var(--border)}
-.chat-quick{display:flex;flex-direction:column;gap:.4rem;padding:.5rem 1rem}
-.cq{font-size:.7rem;border:1px solid var(--border);color:var(--text2);padding:.4rem .7rem;cursor:none;background:transparent;text-align:left;transition:all .3s;font-family:'DM Sans',sans-serif}
-.cq:hover{border-color:var(--gold);color:var(--gold)}
-.chat-input-row{display:flex;border-top:1px solid var(--border2)}
-.chat-input{flex:1;background:transparent;border:none;padding:.8rem 1rem;font-size:.75rem;color:var(--text);font-family:'DM Sans',sans-serif;outline:none}
-.chat-input::placeholder{color:var(--text3)}
-.chat-send{background:var(--gold);border:none;padding:.8rem 1rem;cursor:none;font-size:.75rem;font-weight:600;color:var(--navy);font-family:'DM Sans',sans-serif;transition:background .3s}
-.chat-send:hover{background:var(--gold2)}
+/* Hero buttons */
+.hero-btns {
+  display: flex; gap: 1rem; flex-wrap: wrap;
+  opacity: 0; animation: animFadeUp .9s .65s var(--ease-out) both;
+}
 
-/* ─── ANIMATIONS ─── */
-@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
-@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-.reveal{opacity:0;transform:translateY(32px);transition:opacity .75s ease,transform .75s ease}
-.reveal.vis{opacity:1;transform:none}
-.rd1{transition-delay:.1s}.rd2{transition-delay:.2s}.rd3{transition-delay:.3s}.rd4{transition-delay:.4s}
+/* Shared button styles */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: .65rem;
+  background: linear-gradient(135deg, var(--gold3), var(--gold));
+  color: var(--navy); border: none; padding: 1.05rem 2.25rem;
+  border-radius: 100px; font-family: 'DM Sans', sans-serif;
+  font-size: .8rem; font-weight: 700;
+  letter-spacing: .07em; text-transform: uppercase;
+  text-decoration: none;
+  box-shadow: 0 4px 28px rgba(200,168,75,.22), inset 0 1px 0 rgba(255,255,255,.15);
+  transition: transform .28s var(--ease-out), box-shadow .28s, filter .28s;
+  position: relative; overflow: hidden;
+}
+.btn-primary::before {
+  content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+  transform: skewX(-20deg);
+  transition: left .6s var(--ease-out);
+}
+.btn-primary:hover { transform: translateY(-3px); box-shadow: 0 14px 48px rgba(200,168,75,.4); filter: brightness(1.06); }
+.btn-primary:hover::before { left: 160%; }
 
-/* ─── RESPONSIVE ─── */
-@media(max-width:900px){
-  .nav-links,.nav-cta{display:none}
-  .burger{display:flex}
-  .services-grid,.valeur-grid,.process-wrap,.zone-wrap,.propos-grid,.sim-grid,.audit-items,.footer-top{grid-template-columns:1fr}
-  .svc-ghost{display:none}
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: .65rem;
+  background: transparent; border: 1px solid var(--w15);
+  color: var(--w50); padding: 1.05rem 2.25rem;
+  border-radius: 100px; font-family: 'DM Sans', sans-serif;
+  font-size: .8rem; font-weight: 400;
+  letter-spacing: .05em; text-transform: uppercase;
+  text-decoration: none;
+  transition: border-color .3s, color .3s, background .3s, transform .25s;
+}
+.btn-secondary:hover { border-color: var(--borderHi); color: var(--gold2); background: var(--goldA6); transform: translateY(-2px); }
+
+/* Hero stat cards */
+.hero-stats {
+  display: flex; flex-direction: column; gap: 1.1rem;
+  opacity: 0; animation: animFadeUp .9s .5s var(--ease-out) both;
+}
+.hstat {
+  background: rgba(255,255,255,.025);
+  border: 1px solid var(--border);
+  border-radius: var(--r20); padding: 1.4rem 1.75rem;
+  display: flex; align-items: center; gap: 1.2rem;
+  backdrop-filter: blur(20px);
+  position: relative; overflow: hidden;
+  transition: border-color .35s, background .35s, transform .35s var(--ease-out);
+}
+.hstat::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, var(--goldA6), transparent 60%);
+  opacity: 0; transition: opacity .35s;
+}
+.hstat:hover { border-color: var(--borderHi); background: rgba(200,168,75,.04); transform: translateX(8px); }
+.hstat:hover::before { opacity: 1; }
+.hstat-icon {
+  width: 46px; height: 46px; border-radius: var(--r12); flex-shrink: 0;
+  background: var(--goldA10); border: 1px solid var(--goldA25);
+  display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+}
+.hstat-title { font-size: .95rem; font-weight: 600; color: var(--w90); margin-bottom: .2rem; }
+.hstat-sub { font-size: .78rem; font-weight: 300; color: var(--w50); line-height: 1.55; }
+.hstat-live {
+  position: absolute; top: 1.1rem; right: 1.25rem;
+  display: flex; align-items: center; gap: .35rem;
+  font-size: .6rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: #4ade80;
+}
+.hstat-live-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #4ade80; box-shadow: 0 0 8px #4ade80;
+  animation: livePulse 2s ease infinite;
+}
+@keyframes livePulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: .6; } }
+
+/* Scroll indicator */
+.hero-scroll-hint {
+  position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
+  z-index: 3; display: flex; flex-direction: column; align-items: center; gap: .6rem;
+  opacity: 0; animation: animFadeIn 1s 1.8s both;
+}
+.hero-scroll-label {
+  font-size: .6rem; font-weight: 700; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--w30);
+}
+.hero-scroll-line {
+  width: 1px; height: 48px;
+  background: linear-gradient(to bottom, var(--gold), transparent);
+  animation: scrollDrop 2.2s ease infinite;
+}
+@keyframes scrollDrop {
+  0% { transform: scaleY(0); transform-origin: top; opacity: 0; }
+  40% { transform: scaleY(1); transform-origin: top; opacity: 1; }
+  80% { transform: scaleY(0); transform-origin: bottom; opacity: 0; }
+  100% { opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MARQUEE BAND
+═══════════════════════════════════════════════════════════════ */
+.marquee-band {
+  background: var(--gold); overflow: hidden;
+  padding: .8rem 0; position: relative; z-index: 10;
+  border-top: 1px solid rgba(0,0,0,.1);
+}
+.marquee-track {
+  display: flex; width: max-content;
+  animation: marqueeScroll 26s linear infinite;
+}
+.marquee-track:hover { animation-play-state: paused; }
+.marquee-item {
+  display: flex; align-items: center; gap: 2.5rem;
+  padding: 0 2.5rem; white-space: nowrap;
+  font-size: .7rem; font-weight: 700;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--navy);
+}
+.marquee-sep { width: 4px; height: 4px; border-radius: 50%; background: var(--navy); opacity: .35; }
+@keyframes marqueeScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION SYSTEM
+═══════════════════════════════════════════════════════════════ */
+.section { padding: 140px 5vw; position: relative; }
+.bg-ink   { background: var(--ink); }
+.bg-deep  { background: var(--deep); }
+.bg-navy  { background: var(--navy); }
+.bg-navy2 { background: var(--navy2); }
+.bg-navy3 { background: var(--navy3); }
+
+.container { max-width: 1200px; margin: 0 auto; }
+
+.section-tag {
+  display: inline-flex; align-items: center; gap: .75rem;
+  font-size: .67rem; font-weight: 700;
+  letter-spacing: .2em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 1.5rem;
+}
+.section-tag-bar { width: 20px; height: 1px; background: var(--gold); flex-shrink: 0; }
+
+h2.serif {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(2.1rem, 4.2vw, 3.5rem);
+  font-weight: 400; color: var(--w100);
+  line-height: 1.13; letter-spacing: -.01em;
+  margin-bottom: 1.5rem;
+}
+h2.serif em { font-style: italic; font-weight: 300; color: var(--gold2); }
+
+.section-lead {
+  font-size: .98rem; font-weight: 300; color: var(--w50);
+  line-height: 1.88; max-width: 530px;
+}
+
+/* Gold divider */
+.gold-rule { height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); opacity: .18; margin: 0; }
+
+/* ═══════════════════════════════════════════════════════════════
+   REVEAL ANIMATIONS
+═══════════════════════════════════════════════════════════════ */
+.rev-up    { opacity: 0; transform: translateY(32px); transition: opacity .85s var(--ease-out), transform .85s var(--ease-out); }
+.rev-left  { opacity: 0; transform: translateX(-32px); transition: opacity .85s var(--ease-out), transform .85s var(--ease-out); }
+.rev-right { opacity: 0; transform: translateX(32px); transition: opacity .85s var(--ease-out), transform .85s var(--ease-out); }
+.rev-scale { opacity: 0; transform: scale(.96); transition: opacity .85s var(--ease-out), transform .85s var(--ease-out); }
+.revealed  { opacity: 1 !important; transform: none !important; }
+
+/* Word-by-word reveal */
+.word-reveal .word {
+  display: inline-block; opacity: 0; transform: translateY(14px);
+  transition: opacity .5s var(--ease-out), transform .5s var(--ease-out);
+}
+.word-reveal.revealed .word { opacity: 1; transform: translateY(0); }
+
+/* ═══════════════════════════════════════════════════════════════
+   SERVICES SECTION
+═══════════════════════════════════════════════════════════════ */
+.services-header {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 4rem; align-items: end; margin-bottom: 5rem;
+}
+
+.services-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1.5px; background: var(--border);
+  border: 1px solid var(--border); border-radius: var(--r28); overflow: hidden;
+}
+.service-card {
+  background: var(--navy);
+  padding: 3rem 2.75rem;
+  position: relative; overflow: hidden;
+  transition: background .4s;
+}
+.service-card::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform .5s var(--ease-out);
+}
+.service-card:hover { background: rgba(200,168,75,.04); }
+.service-card:hover::after { transform: scaleX(1); }
+.service-card:hover .service-num { color: rgba(200,168,75,.12); }
+
+.service-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 4.5rem; font-weight: 600; line-height: 1;
+  color: rgba(200,168,75,.05);
+  position: absolute; top: 2rem; right: 2rem;
+  transition: color .4s;
+  pointer-events: none;
+}
+.service-chip {
+  display: inline-block;
+  background: var(--goldA10); border: 1px solid var(--goldA25);
+  color: var(--gold2); border-radius: 100px;
+  font-size: .64rem; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  padding: .28rem .85rem; margin-bottom: 1.5rem;
+  transition: background .3s;
+}
+.service-card:hover .service-chip { background: rgba(200,168,75,.2); }
+.service-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem; font-weight: 500;
+  color: var(--w100); margin-bottom: .85rem; line-height: 1.3;
+}
+.service-desc { font-size: .88rem; font-weight: 300; color: var(--w50); line-height: 1.82; max-width: 340px; }
+
+/* Tilt effect applied via JS */
+.tilt-card { transform-style: preserve-3d; }
+
+/* ═══════════════════════════════════════════════════════════════
+   PLATFORM STRIP
+═══════════════════════════════════════════════════════════════ */
+.platform-strip {
+  background: var(--navy); padding: 4rem 5vw;
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+}
+.platform-strip-inner {
+  max-width: 1200px; margin: 0 auto;
+  display: flex; align-items: center; gap: 4rem; flex-wrap: wrap;
+}
+.platform-label {
+  font-size: .64rem; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase;
+  color: var(--w30); white-space: nowrap; flex-shrink: 0;
+}
+.platform-list { display: flex; gap: 1rem; flex-wrap: wrap; }
+.platform-pill {
+  display: flex; align-items: center; gap: .6rem;
+  background: var(--w02); border: 1px solid var(--border);
+  border-radius: 100px; padding: .6rem 1.3rem;
+  font-size: .8rem; font-weight: 500; color: var(--w50);
+  transition: border-color .25s, background .25s, color .25s, transform .2s var(--ease-out);
+}
+.platform-pill:hover { border-color: var(--borderHi); background: var(--goldA10); color: var(--gold2); transform: translateY(-2px); }
+.platform-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* ═══════════════════════════════════════════════════════════════
+   PILIERS / APPROCHE
+═══════════════════════════════════════════════════════════════ */
+.piliers-intro {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 4rem; align-items: end; margin-bottom: 5rem;
+}
+.piliers-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.75rem; }
+
+.pilier-card {
+  background: var(--navy2); border: 1px solid var(--border);
+  border-radius: var(--r24); padding: 2.75rem 2.25rem;
+  position: relative; overflow: hidden;
+  transition: border-color .4s, transform .45s var(--ease-out), box-shadow .45s;
+}
+.pilier-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  transform: scaleX(0); transform-origin: center;
+  transition: transform .55s var(--ease-out);
+}
+.pilier-card:hover { border-color: var(--borderHi); transform: translateY(-10px); box-shadow: 0 30px 72px rgba(0,0,0,.55), inset 0 0 0 1px var(--borderHi); }
+.pilier-card:hover::before { transform: scaleX(1); }
+.pilier-card:hover .pilier-num { color: rgba(200,168,75,.14); }
+
+.pilier-icon {
+  width: 46px; height: 46px; border-radius: var(--r12);
+  background: var(--goldA10); border: 1px solid var(--goldA25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.15rem; margin-bottom: 1.75rem;
+  transition: background .3s;
+}
+.pilier-card:hover .pilier-icon { background: rgba(200,168,75,.2); }
+.pilier-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 5rem; font-weight: 600; line-height: 1;
+  color: rgba(200,168,75,.055); display: block; margin-bottom: 1.25rem;
+  transition: color .4s;
+}
+.pilier-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.45rem; font-weight: 500; color: var(--w100); margin-bottom: .75rem;
+}
+.pilier-desc { font-size: .875rem; font-weight: 300; color: var(--w50); line-height: 1.82; }
+
+/* ═══════════════════════════════════════════════════════════════
+   COMPARISON TABLE — Renova Stay vs Solo
+═══════════════════════════════════════════════════════════════ */
+.compare-section { }
+.compare-intro { margin-bottom: 4rem; }
+.compare-table { border: 1px solid var(--border); border-radius: var(--r24); overflow: hidden; }
+.compare-head {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  background: var(--navy3); border-bottom: 1px solid var(--border);
+}
+.compare-head-cell {
+  padding: 1.5rem 2rem; font-size: .78rem; font-weight: 600;
+  letter-spacing: .05em; color: var(--w50);
+  border-right: 1px solid var(--border);
+}
+.compare-head-cell:last-child { border-right: none; }
+.compare-head-cell.highlight {
+  color: var(--gold2);
+  background: rgba(200,168,75,.05);
+  font-weight: 700;
+  display: flex; align-items: center; gap: .5rem;
+}
+.compare-head-cell.highlight::before {
+  content: '★'; color: var(--gold); font-size: .85rem;
+}
+.compare-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+  transition: background .25s;
+}
+.compare-row:last-child { border-bottom: none; }
+.compare-row:hover { background: var(--goldA6); }
+.compare-cell {
+  padding: 1.35rem 2rem; font-size: .875rem; font-weight: 300;
+  color: var(--w50); border-right: 1px solid var(--border);
+  display: flex; align-items: center; gap: .65rem;
+  line-height: 1.5;
+}
+.compare-cell:last-child { border-right: none; }
+.compare-cell.feature { color: var(--w70); font-weight: 400; }
+.compare-cell.rs { color: var(--w80); background: rgba(200,168,75,.025); }
+.compare-icon-yes { color: #4ade80; font-size: 1rem; flex-shrink: 0; }
+.compare-icon-no  { color: #f87171; font-size: 1rem; flex-shrink: 0; }
+.compare-icon-meh { color: #fbbf24; font-size: .9rem; flex-shrink: 0; }
+
+/* ═══════════════════════════════════════════════════════════════
+   PROMISE SECTION
+═══════════════════════════════════════════════════════════════ */
+.promise-grid {
+  display: grid; grid-template-columns: repeat(2,1fr);
+  gap: 1.25rem; margin-top: 3.5rem;
+}
+.promise-card {
+  background: var(--w02); border: 1px solid var(--border);
+  border-radius: var(--r20); padding: 2rem 2.25rem;
+  display: flex; gap: 1.25rem; align-items: flex-start;
+  transition: border-color .3s, background .3s, transform .3s var(--ease-out);
+}
+.promise-card:hover { border-color: var(--borderHi); background: var(--goldA6); transform: translateY(-4px); }
+.promise-icon {
+  width: 44px; height: 44px; border-radius: var(--r12); flex-shrink: 0;
+  background: var(--goldA10); border: 1px solid var(--goldA25);
+  display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+}
+.promise-title { font-size: 1rem; font-weight: 600; color: var(--w90); margin-bottom: .4rem; }
+.promise-desc { font-size: .85rem; font-weight: 300; color: var(--w50); line-height: 1.7; }
+
+/* ═══════════════════════════════════════════════════════════════
+   PROCESS TIMELINE
+═══════════════════════════════════════════════════════════════ */
+.process-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 7rem; align-items: start; }
+.timeline { position: relative; padding-left: 3.25rem; }
+.timeline::before {
+  content: ''; position: absolute; left: 9px; top: 10px; bottom: 10px; width: 1px;
+  background: linear-gradient(to bottom, var(--gold) 0%, rgba(200,168,75,.1) 100%);
+}
+.timeline-step { position: relative; margin-bottom: 3.25rem; }
+.timeline-step:last-child { margin-bottom: 0; }
+
+.tl-dot {
+  position: absolute; left: -3.25rem; top: 4px;
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 1px solid var(--gold); background: var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  transition: background .3s, box-shadow .3s;
+}
+.tl-dot::after {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold); transition: transform .3s;
+}
+.timeline-step:hover .tl-dot { background: var(--goldA15); box-shadow: 0 0 18px var(--goldA40); }
+.timeline-step:hover .tl-dot::after { transform: scale(1.6); }
+
+.tl-step-num {
+  font-size: .62rem; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--gold); margin-bottom: .55rem;
+}
+.tl-step-title { font-size: 1.05rem; font-weight: 600; color: var(--w90); margin-bottom: .5rem; }
+.tl-step-desc { font-size: .875rem; font-weight: 300; color: var(--w50); line-height: 1.78; }
+
+.process-panel {
+  position: sticky; top: 120px;
+  background: var(--navy3); border: 1px solid var(--border);
+  border-radius: var(--r28); overflow: hidden;
+}
+.process-panel-head {
+  padding: 2.5rem 2.5rem 2rem;
+  background: linear-gradient(135deg, var(--goldA10), transparent);
+  border-bottom: 1px solid var(--border);
+}
+.pp-label {
+  font-size: .62rem; font-weight: 700; letter-spacing: .15em;
+  text-transform: uppercase; color: var(--gold); margin-bottom: 1rem;
+}
+.pp-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.55rem; font-weight: 400; color: var(--w100); line-height: 1.35;
+}
+.process-panel-body { padding: 2rem 2.5rem; }
+.pp-list { list-style: none; display: flex; flex-direction: column; gap: .85rem; }
+.pp-item {
+  display: flex; align-items: center; gap: 1rem;
+  padding: .85rem 1.1rem; border: 1px solid var(--border); border-radius: var(--r12);
+  font-size: .875rem; font-weight: 300; color: var(--w50);
+  transition: border-color .25s, background .25s, color .25s, transform .22s var(--ease-out);
+}
+.pp-item:hover { border-color: var(--borderHi); background: var(--goldA10); color: var(--w80); transform: translateX(5px); }
+.pp-item-icon {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  background: var(--goldA10); display: flex; align-items: center; justify-content: center; font-size: .9rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FAQ SECTION
+═══════════════════════════════════════════════════════════════ */
+.faq-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 7rem; align-items: start; }
+.faq-list { display: flex; flex-direction: column; gap: .75rem; }
+.faq-item {
+  border: 1px solid var(--border); border-radius: var(--r16);
+  overflow: hidden;
+  transition: border-color .3s;
+}
+.faq-item.open { border-color: var(--borderHi); }
+.faq-q {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 1.5rem 1.75rem; font-size: .95rem; font-weight: 500;
+  color: var(--w80); background: transparent; border: none; width: 100%;
+  text-align: left; transition: color .25s, background .25s;
+}
+.faq-q:hover { color: var(--w100); background: var(--w02); }
+.faq-item.open .faq-q { color: var(--gold2); }
+.faq-arrow {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  border: 1px solid var(--border); background: var(--w02);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .35s var(--ease-out), border-color .3s, background .3s;
+}
+.faq-item.open .faq-arrow { transform: rotate(45deg); border-color: var(--gold); background: var(--goldA10); }
+.faq-a {
+  max-height: 0; overflow: hidden;
+  transition: max-height .45s var(--ease-out), padding .35s;
+  padding: 0 1.75rem;
+  font-size: .875rem; font-weight: 300; color: var(--w50); line-height: 1.82;
+}
+.faq-item.open .faq-a { max-height: 300px; padding: 0 1.75rem 1.5rem; }
+
+.faq-visual {
+  background: var(--navy3); border: 1px solid var(--border);
+  border-radius: var(--r28); overflow: hidden; position: sticky; top: 120px;
+}
+.faq-visual-top {
+  padding: 2.5rem;
+  background: linear-gradient(135deg, var(--goldA10), transparent);
+  border-bottom: 1px solid var(--border);
+}
+.faq-visual-label {
+  font-size: .62rem; font-weight: 700; letter-spacing: .15em;
+  text-transform: uppercase; color: var(--gold); margin-bottom: 1rem;
+}
+.faq-visual-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem; font-weight: 400; color: var(--w100); line-height: 1.35;
+}
+.faq-visual-body { padding: 2rem 2.5rem; }
+.faq-contact-links { display: flex; flex-direction: column; gap: 1rem; }
+.faq-contact-link {
+  display: flex; align-items: center; gap: 1.1rem;
+  padding: 1.1rem 1.25rem; border: 1px solid var(--border); border-radius: var(--r12);
+  text-decoration: none; color: var(--w50); font-size: .88rem; font-weight: 300;
+  transition: border-color .25s, background .25s, color .25s, transform .22s var(--ease-out);
+}
+.faq-contact-link:hover { border-color: var(--borderHi); background: var(--goldA10); color: var(--w80); transform: translateX(5px); }
+.faq-contact-icon {
+  width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+  background: var(--goldA10); border: 1px solid var(--goldA25);
+  display: flex; align-items: center; justify-content: center; font-size: 1rem;
+}
+.faq-contact-text-label { font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); margin-bottom: .2rem; }
+.faq-contact-text-val { font-size: .88rem; font-weight: 400; color: var(--w80); }
+
+/* ═══════════════════════════════════════════════════════════════
+   MAP SECTION
+═══════════════════════════════════════════════════════════════ */
+.map-layout { display: grid; grid-template-columns: 1fr 1fr; min-height: 640px; }
+.map-left { padding: 8rem 5vw; background: var(--navy2); display: flex; flex-direction: column; justify-content: center; }
+.map-right { position: relative; overflow: hidden; }
+#leaflet-map { width: 100%; height: 100%; min-height: 640px; }
+
+.leaflet-container { background: var(--navy2) !important; }
+.leaflet-tile { filter: invert(1) hue-rotate(195deg) brightness(.68) contrast(1.25) saturate(.45) !important; }
+.leaflet-control-zoom { display: none !important; }
+.leaflet-control-attribution { background: rgba(3,6,12,.75) !important; color: rgba(255,255,255,.22) !important; font-size: 9px !important; border-radius: 4px !important; }
+.leaflet-control-attribution a { color: var(--gold) !important; }
+.leaflet-popup-content-wrapper { background: rgba(3,6,12,.95) !important; border: 1px solid var(--borderHi) !important; border-radius: var(--r12) !important; color: var(--w80) !important; box-shadow: 0 8px 32px rgba(0,0,0,.6) !important; backdrop-filter: blur(16px) !important; }
+.leaflet-popup-tip { background: rgba(3,6,12,.95) !important; }
+.leaflet-popup-close-button { color: var(--w30) !important; }
+
+.map-overlay {
+  position: absolute; bottom: 2rem; left: 2rem; z-index: 10;
+  background: rgba(3,6,12,.9); border: 1px solid var(--borderHi);
+  border-radius: var(--r16); padding: 1.25rem 1.6rem;
+  backdrop-filter: blur(20px);
+}
+.mo-title { font-size: .88rem; font-weight: 600; color: var(--w100); margin-bottom: .3rem; display: flex; align-items: center; gap: .5rem; }
+.mo-live { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 8px #4ade80; animation: livePulse 2s infinite; }
+.mo-sub { font-size: .75rem; font-weight: 300; color: var(--w50); }
+
+.zone-list { display: flex; flex-direction: column; gap: .75rem; margin-top: 2.5rem; }
+.zone-item {
+  display: flex; align-items: center; gap: 1rem;
+  padding: .85rem 1.1rem; border: 1px solid var(--border); border-radius: var(--r12);
+  font-size: .875rem; font-weight: 300; color: var(--w50);
+  transition: border-color .25s, color .25s, background .25s, transform .22s var(--ease-out);
+}
+.zone-item:hover { border-color: var(--gold); color: var(--w80); background: var(--goldA10); transform: translateX(6px); }
+.zone-pin { color: var(--gold); font-size: .95rem; flex-shrink: 0; }
+
+/* ═══════════════════════════════════════════════════════════════
+   ABOUT / VISION
+═══════════════════════════════════════════════════════════════ */
+.about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7rem; align-items: center; }
+.about-quote {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.65rem; font-style: italic; font-weight: 300;
+  color: var(--w100); line-height: 1.5;
+  border-left: 2px solid var(--gold); padding-left: 2rem;
+  margin: 2.5rem 0;
+}
+.about-body { font-size: .95rem; font-weight: 300; color: var(--w50); line-height: 1.92; }
+.about-signature { display: flex; align-items: center; gap: 1rem; margin-top: 2.5rem; }
+.about-sig-line { width: 36px; height: 1px; background: var(--gold); }
+.about-sig-text { font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+
+.about-panel { background: var(--navy3); border: 1px solid var(--border); border-radius: var(--r28); overflow: hidden; }
+.about-panel-head { padding: 2.25rem 2.5rem; border-bottom: 1px solid var(--border); background: linear-gradient(135deg, var(--goldA6), transparent); }
+.about-panel-title { font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; font-weight: 500; color: var(--w100); }
+.about-panel-body { padding: 2rem 2.5rem; }
+.about-list { list-style: none; display: flex; flex-direction: column; gap: .75rem; }
+.about-item {
+  display: flex; gap: 1rem; align-items: flex-start;
+  padding: .85rem 1rem; border-radius: var(--r12);
+  border: 1px solid transparent;
+  font-size: .875rem; font-weight: 300; color: var(--w50); line-height: 1.72;
+  transition: border-color .25s, background .25s, color .25s;
+}
+.about-item:hover { border-color: var(--border); background: var(--goldA6); color: var(--w70); }
+.about-arrow { color: var(--gold); font-size: .8rem; margin-top: .22rem; flex-shrink: 0; font-weight: 600; }
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIT / CTA SECTION
+═══════════════════════════════════════════════════════════════ */
+.audit-section {
+  background: linear-gradient(145deg, #050A14 0%, #03060C 50%, #070F1D 100%);
+  position: relative; overflow: hidden;
+}
+.audit-glow {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: 900px; height: 900px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(200,168,75,.055) 0%, transparent 60%);
+}
+.audit-inner { max-width: 920px; margin: 0 auto; position: relative; z-index: 1; }
+.audit-items-grid {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 1px; background: var(--border); border: 1px solid var(--border);
+  border-radius: var(--r20); overflow: hidden; margin-bottom: 3.5rem;
+}
+.audit-item {
+  background: var(--navy); padding: 2rem 1.5rem; text-align: center;
+  transition: background .3s;
+}
+.audit-item:hover { background: rgba(200,168,75,.06); }
+.audit-item-icon { font-size: 1.5rem; display: block; margin-bottom: .85rem; }
+.audit-item-label { font-size: .82rem; font-weight: 400; color: var(--w50); line-height: 1.5; transition: color .3s; }
+.audit-item:hover .audit-item-label { color: var(--w80); }
+
+/* Contact cards */
+.contact-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 2.5rem; }
+.contact-card {
+  display: flex; align-items: center; gap: 1.25rem;
+  background: var(--w02); border: 1px solid var(--border);
+  border-radius: var(--r20); padding: 1.75rem 2rem;
+  text-decoration: none;
+  transition: border-color .3s, background .3s, transform .3s var(--ease-out);
+}
+.contact-card:hover { border-color: var(--borderHi); background: var(--goldA10); transform: translateY(-4px); }
+.contact-icon {
+  width: 46px; height: 46px; border-radius: var(--r12); flex-shrink: 0;
+  background: var(--goldA10); border: 1px solid var(--goldA25);
+  display: flex; align-items: center; justify-content: center; font-size: 1.15rem;
+}
+.contact-label { font-size: .7rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); margin-bottom: .3rem; }
+.contact-value { font-size: .92rem; font-weight: 400; color: var(--w80); }
+
+.audit-cta-row { display: flex; align-items: center; gap: 2.5rem; flex-wrap: wrap; }
+.audit-note { font-size: .8rem; font-weight: 300; color: var(--w30); line-height: 1.72; }
+
+/* ═══════════════════════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════════════════════ */
+footer { background: #02040A; border-top: 1px solid var(--border); padding: 5.5rem 5vw 2.5rem; }
+.footer-grid {
+  max-width: 1200px; margin: 0 auto;
+  display: grid; grid-template-columns: 2fr 1fr 1fr 1.6fr;
+  gap: 4rem; padding-bottom: 4rem;
+  border-bottom: 1px solid rgba(255,255,255,.04); margin-bottom: 2rem;
+}
+.footer-brand {}
+.footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 600; color: var(--w100); margin-bottom: .9rem; }
+.footer-logo span { color: var(--gold); }
+.footer-tagline { font-size: .82rem; font-weight: 300; color: var(--w30); line-height: 1.72; max-width: 240px; }
+.footer-col-title { font-size: .62rem; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--w30); margin-bottom: 1.3rem; }
+.footer-links { display: flex; flex-direction: column; gap: .65rem; }
+.footer-links a { font-size: .82rem; font-weight: 300; color: var(--w50); text-decoration: none; transition: color .2s; }
+.footer-links a:hover { color: var(--gold2); }
+.footer-contact-email { display: flex; align-items: center; gap: .55rem; font-size: .9rem; font-weight: 500; color: var(--gold); text-decoration: none; transition: opacity .2s; margin-bottom: .5rem; }
+.footer-contact-email:hover { opacity: .7; }
+.footer-contact-phone { display: flex; align-items: center; gap: .55rem; font-size: .88rem; font-weight: 400; color: var(--w50); text-decoration: none; transition: color .2s; }
+.footer-contact-phone:hover { color: var(--gold2); }
+.footer-zone { font-size: .75rem; font-weight: 300; color: var(--w30); margin-top: .85rem; display: flex; align-items: center; gap: .45rem; }
+.footer-bottom { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.footer-copy { font-size: .74rem; color: var(--w30); }
+.footer-legal { display: flex; gap: 1.5rem; }
+.footer-legal a { font-size: .74rem; color: var(--w30); text-decoration: none; transition: color .2s; }
+.footer-legal a:hover { color: var(--gold); }
+
+/* ═══════════════════════════════════════════════════════════════
+   FLOATING BUTTONS
+═══════════════════════════════════════════════════════════════ */
+.float-btn-call {
+  position: fixed; bottom: 2rem; right: 2rem; z-index: 400;
+  display: flex; align-items: center; gap: .75rem;
+  background: var(--gold);
+  color: var(--navy); text-decoration: none;
+  padding: .85rem 1.5rem; border-radius: 100px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  box-shadow: 0 8px 32px rgba(200,168,75,.4);
+  transition: transform .25s var(--ease-out), box-shadow .25s, filter .25s;
+  animation: floatBtnIn .8s 2s both;
+}
+.float-btn-call:hover { transform: translateY(-3px); box-shadow: 0 16px 48px rgba(200,168,75,.55); filter: brightness(1.07); }
+.float-btn-call-icon { font-size: 1rem; animation: callRing 3s 3s ease-in-out infinite; }
+@keyframes callRing {
+  0%,90%,100% { transform: rotate(0deg); }
+  92% { transform: rotate(-15deg); }
+  96% { transform: rotate(15deg); }
+  98% { transform: rotate(-8deg); }
+}
+@keyframes floatBtnIn { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+/* ═══════════════════════════════════════════════════════════════
+   POPUP
+═══════════════════════════════════════════════════════════════ */
+#audit-popup {
+  position: fixed; bottom: 2rem; left: 2rem; z-index: 400;
+  background: rgba(3,6,12,.96); border: 1px solid var(--borderHi);
+  border-radius: var(--r20); padding: 1.75rem 2rem;
+  max-width: 320px; backdrop-filter: blur(24px);
+  box-shadow: 0 16px 64px rgba(0,0,0,.6), 0 0 0 1px var(--border);
+  transform: translateY(20px); opacity: 0;
+  transition: transform .5s var(--ease-out), opacity .5s;
+  pointer-events: none;
+}
+#audit-popup.show { transform: translateY(0); opacity: 1; pointer-events: all; }
+.popup-close {
+  position: absolute; top: .85rem; right: 1rem;
+  background: none; border: none; color: var(--w30);
+  font-size: 1.1rem; line-height: 1; transition: color .2s;
+}
+.popup-close:hover { color: var(--w80); }
+.popup-tag {
+  display: inline-flex; align-items: center; gap: .5rem;
+  font-size: .6rem; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--gold); margin-bottom: .85rem;
+}
+.popup-tag-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); animation: livePulse 2s infinite; }
+.popup-title { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 500; color: var(--w100); margin-bottom: .5rem; line-height: 1.3; }
+.popup-sub { font-size: .8rem; font-weight: 300; color: var(--w50); margin-bottom: 1.25rem; line-height: 1.6; }
+.popup-cta {
+  display: flex; align-items: center; justify-content: center; gap: .6rem;
+  background: linear-gradient(135deg, var(--gold3), var(--gold));
+  color: var(--navy); text-decoration: none; border-radius: 100px;
+  padding: .75rem 1.25rem; font-size: .75rem; font-weight: 700;
+  letter-spacing: .07em; text-transform: uppercase;
+  transition: filter .2s, transform .2s var(--ease-out);
+  box-shadow: 0 4px 20px rgba(200,168,75,.3);
+}
+.popup-cta:hover { filter: brightness(1.08); transform: translateY(-2px); }
+
+/* ═══════════════════════════════════════════════════════════════
+   KEYFRAMES
+═══════════════════════════════════════════════════════════════ */
+@keyframes animFadeUp { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:translateY(0); } }
+@keyframes animFadeIn { from { opacity:0; } to { opacity:1; } }
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════════ */
+@media (max-width: 1100px) {
+  .hero-content { grid-template-columns: 1fr; }
+  .hero-stats { display: none; }
+  .services-header { grid-template-columns: 1fr; gap: 2rem; }
+  .piliers-intro { grid-template-columns: 1fr; gap: 2rem; }
+  .piliers-grid { grid-template-columns: 1fr 1fr; }
+  .process-layout { grid-template-columns: 1fr; }
+  .process-panel { position: static; }
+  .faq-layout { grid-template-columns: 1fr; }
+  .faq-visual { position: static; }
+  .map-layout { grid-template-columns: 1fr; }
+  .about-grid { grid-template-columns: 1fr; gap: 3rem; }
+  .audit-items-grid { grid-template-columns: 1fr 1fr; }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+  .compare-table { overflow-x: auto; }
+}
+@media (max-width: 768px) {
+  .section { padding: 100px 5vw; }
+  .nav-menu { display: none; }
+  .services-grid { grid-template-columns: 1fr; }
+  .piliers-grid { grid-template-columns: 1fr; }
+  .promise-grid { grid-template-columns: 1fr; }
+  .contact-row { grid-template-columns: 1fr; }
+  .compare-head, .compare-row { grid-template-columns: 1fr; }
+  .compare-head-cell, .compare-cell { border-right: none; border-bottom: 1px solid var(--border); }
+  .compare-head-cell:last-child, .compare-cell:last-child { border-bottom: none; }
+  body { cursor: auto; }
+  #cursor-dot, #cursor-ring, #cursor-label { display: none; }
+  .float-btn-call { padding: .85rem 1.1rem; }
+}
+@media (max-width: 520px) {
+  .hero-btns { flex-direction: column; }
+  .audit-cta-row { flex-direction: column; align-items: flex-start; }
+  .footer-grid { grid-template-columns: 1fr; }
+  .audit-items-grid { grid-template-columns: 1fr 1fr; }
+  #audit-popup { left: 1rem; right: 1rem; max-width: none; }
 }
 </style>
 </head>
 <body>
 
-<div id="cur"></div>
-<div id="cur-ring"></div>
-<div id="progress"></div>
-<canvas id="stars"></canvas>
-
-<!-- LOADER -->
-<div id="loader">
-  <div class="loader-logo"><b>Renova</b><span>·Stay</span></div>
-  <div class="loader-track"><div class="loader-fill" id="lfill"></div></div>
-  <div class="loader-pct" id="lpct">0%</div>
+<!-- ═══ LOADER ═══ -->
+<div id="page-loader">
+  <div class="loader-wordmark">Renova<span>·</span>Stay</div>
+  <div class="loader-progress-wrap"><div class="loader-progress-bar" id="loader-bar"></div></div>
+  <div class="loader-pct" id="loader-pct">0%</div>
 </div>
 
-<!-- NAV -->
-<nav id="nav">
-  <a href="#hero" class="logo"><b>Renova</b><span>·Stay</span></a>
-  <ul class="nav-links">
+<!-- ═══ CURSOR ═══ -->
+<div id="cursor-dot"></div>
+<div id="cursor-ring"></div>
+<div id="cursor-label">Explorer</div>
+
+<!-- ═══ PARTICLES ═══ -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- ═══ POPUP ═══ -->
+<div id="audit-popup">
+  <button class="popup-close" id="popup-close" aria-label="Fermer">✕</button>
+  <div class="popup-tag"><span class="popup-tag-dot"></span>Offre gratuite</div>
+  <div class="popup-title">Audit gratuit de votre annonce</div>
+  <div class="popup-sub">Obtenez une analyse complète de votre bien en Moselle — sans engagement.</div>
+  <a href="mailto:delio.casciu10@gmail.com?subject=Demande%20d%27audit%20gratuit%20-%20Renova%20Stay&body=Bonjour%2C%0A%0AJe%20souhaite%20recevoir%20un%20audit%20gratuit%20de%20mon%20annonce.%0A%0ALien%20%3A%20" class="popup-cta">
+    Recevoir mon audit
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </a>
+</div>
+
+<!-- ═══ FLOATING CALL BUTTON ═══ -->
+<a href="tel:+33783367640" class="float-btn-call" id="float-call">
+  <span class="float-btn-call-icon">📞</span>
+  Appeler maintenant
+</a>
+
+<!-- ═══ NAV ═══ -->
+<nav class="nav" id="main-nav">
+  <a href="#" class="nav-logo">Renova<span class="nav-logo-sep">·</span>Stay</a>
+  <ul class="nav-menu">
     <li><a href="#services">Services</a></li>
-    <li><a href="#valeur">Approche</a></li>
+    <li><a href="#approche">Approche</a></li>
+    <li><a href="#pourquoi">Pourquoi nous</a></li>
     <li><a href="#processus">Méthode</a></li>
     <li><a href="#zone">Zone</a></li>
-    <li><a href="#propos">À propos</a></li>
+    <li><a href="#faq">FAQ</a></li>
   </ul>
-  <button class="nav-cta" onclick="scrollTo('#audit')">Audit gratuit</button>
-  <div class="burger" id="burger" onclick="toggleMob()">
-    <span></span><span></span><span></span>
-  </div>
+  <a href="#contact" class="nav-cta"><span>
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    Audit gratuit
+  </span></a>
 </nav>
 
-<!-- MENU MOB -->
-<div class="mob-menu" id="mobmenu">
-  <a href="#services" onclick="toggleMob()">Services</a>
-  <a href="#valeur" onclick="toggleMob()">Approche</a>
-  <a href="#processus" onclick="toggleMob()">Méthode</a>
-  <a href="#zone" onclick="toggleMob()">Zone</a>
-  <a href="#propos" onclick="toggleMob()">À propos</a>
-  <a href="#audit" onclick="toggleMob()" style="color:var(--gold)">Audit gratuit</a>
-</div>
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="hero-video-wrap">
+    <div class="hero-mesh-fallback"></div>
+    <!-- Videos loop: Metz at night, luxury interior, Moselle nature -->
+    <video class="hero-video" id="hero-video" autoplay muted loop playsinline poster="">
+      <source src="https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-city-at-night-11-large.mp4" type="video/mp4">
+      <source src="https://assets.mixkit.co/videos/preview/mixkit-luxury-living-room-41-large.mp4" type="video/mp4">
+    </video>
+  </div>
+  <div class="hero-grain"></div>
+  <div class="hero-ring hero-ring-1"></div>
+  <div class="hero-ring hero-ring-2"></div>
+  <div class="hero-ring hero-ring-3"></div>
 
-<!-- FLOATING ACTIONS -->
-<div class="float-bar">
-  <div style="position:relative">
-    <a href="https://wa.me/33783367640" target="_blank" class="fab fab-wa" title="WhatsApp">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-    </a>
-  </div>
-  <div style="position:relative">
-    <a href="mailto:delio.casciu10@gmail.com" class="fab fab-mail" title="Email">
-      <svg viewBox="0 0 24 24" fill="white"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
-    </a>
-  </div>
-</div>
-
-<!-- CHATBOT -->
-<div id="chatbot-btn">
-  <div class="chat-bubble" onclick="toggleChat()" title="Chat">
-    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-  </div>
-</div>
-<div class="chat-panel" id="chatPanel">
-  <div class="chat-head">
-    <div><div class="chat-head-name">Renova·Stay</div><div class="chat-head-sub">● En ligne · Répond rapidement</div></div>
-    <button class="chat-close" onclick="toggleChat()">✕</button>
-  </div>
-  <div class="chat-msgs" id="chatMsgs">
-    <div class="msg bot">Bonjour 👋 Je suis là pour répondre à vos questions sur la gestion locative en Moselle. Comment puis-je vous aider ?</div>
-  </div>
-  <div class="chat-quick" id="quickReplies">
-    <button class="cq" onclick="botReply('services')">Vos services en détail ?</button>
-    <button class="cq" onclick="botReply('zone')">Vous intervenez où ?</button>
-    <button class="cq" onclick="botReply('audit')">Comment obtenir un audit ?</button>
-  </div>
-  <div class="chat-input-row">
-    <input class="chat-input" id="chatIn" placeholder="Votre message..." onkeydown="if(event.key==='Enter')sendMsg()">
-    <button class="chat-send" onclick="sendMsg()">→</button>
-  </div>
-</div>
-
-<!-- ═══════════ HERO ═══════════ -->
-<section id="hero">
-  <div class="hero-bg-grad"></div>
-  <div class="hero-grid-lines">
-    <svg viewBox="0 0 1400 800" preserveAspectRatio="xMidYMid slice">
-      <defs><pattern id="g" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M80 0L0 0 0 80" fill="none" stroke="#C4993A" stroke-width=".4"/></pattern></defs>
-      <rect width="1400" height="800" fill="url(#g)"/>
-    </svg>
-  </div>
-  <div class="hero-inner">
-    <div class="hero-eyebrow">Gestion locative · Moselle · Courte durée</div>
-    <h1 class="hero-h1">La gestion locative<br><em>nouvelle génération</em><br>pour la courte durée.</h1>
-    <p class="hero-p">Nous accompagnons les propriétaires dans l'optimisation, l'exploitation et la gestion quotidienne de leurs biens afin d'améliorer leur rentabilité et l'expérience des voyageurs.</p>
-    <div class="hero-btns">
-      <button class="btn-primary" onclick="scrollTo('#audit')"><span>Demander un audit gratuit</span></button>
-      <button class="btn-secondary" onclick="scrollTo('#services')">Découvrir nos services</button>
-    </div>
-    <div class="hero-badges">
-      <div class="hbadge active">Réactivité 7j/7</div>
-      <div class="hbadge">Accompagnement personnalisé</div>
-      <div class="hbadge">Service sur mesure</div>
-    </div>
-  </div>
-  <div class="hero-scroll">
-    <div class="scroll-line"></div>
-    <div class="scroll-txt">Défiler</div>
-  </div>
-</section>
-
-<!-- TICKER -->
-<div class="ticker-wrap" aria-hidden="true">
-  <div class="ticker-inner">
-    <span class="ticker-item"><span class="ticker-dot"></span>Gestion locative</span>
-    <span class="ticker-item"><span class="ticker-dot"></span>Moselle</span>
-    <span class="ticker-item"><span class="ticker-dot"></span>Optimisation d'annonces</span>
-    <span class="ticker-item"><span class="ticker-dot"></span>Renova·Stay</span>
-    <span class="ticker-item"><span class="ticker-dot"></span>Courte durée</span>
-    <span class="ticker-item"><span class="ticker-dot"></span>Airbnb · Booking</span>
-    <span class="ticker-item"><span class="ticker-dot"></span>Expérience voyageur</span>
-    <span class="ticker-item"><span class="ticker-dot"></span>7j/7</span>
-    <span class="ticker-item"><span class="ticker-dot"></span>Gestion locative</span>
-    <span class="ticker-item"><span class="ticker-dot"></span>Moselle</span>
-    <span class="ticker-item"><span class="ticker-dot"></span>Optimisation d'annonces</span>
-    <span class="ticker-item"><span class="ticker-dot"></span>Renova·Stay</span>
-    <span class="ticker-item"><span class="ticker-dot"></span>Courte durée</span>
-    <span class="ticker-item"><span class="ticker-dot"></span>Airbnb · Booking</span>
-    <span class="ticker-item"><span class="ticker-dot"></span>Expérience voyageur</span>
-    <span class="ticker-item"><span class="ticker-dot"></span>7j/7</span>
-  </div>
-</div>
-
-<!-- ═══════════ SERVICES ═══════════ -->
-<section id="services">
-  <div class="services-header reveal">
-    <div class="s-tag">Services</div>
-    <h2 class="s-title">Une prise en charge <em>complète</em></h2>
-    <p class="s-sub">De la communication voyageurs à la coordination terrain — nous gérons chaque aspect de votre activité locative sur toutes les plateformes.</p>
-  </div>
-  <div class="services-grid">
-    <div class="svc reveal">
-      <div class="svc-top-line"></div>
-      <div class="svc-ghost">01</div>
-      <div class="svc-num">01</div>
-      <div class="svc-label">Communication</div>
-      <h3 class="svc-title">Gestion voyageurs</h3>
-      <p class="svc-desc">Nous assurons les échanges avec les voyageurs avant, pendant et après leur séjour pour une expérience irréprochable à chaque étape.</p>
-    </div>
-    <div class="svc reveal rd1">
-      <div class="svc-top-line"></div>
-      <div class="svc-ghost">02</div>
-      <div class="svc-num">02</div>
-      <div class="svc-label">Performance</div>
-      <h3 class="svc-title">Optimisation des annonces</h3>
-      <p class="svc-desc">Analyse des performances, amélioration des descriptions, optimisation du positionnement et valorisation du bien sur toutes les plateformes.</p>
-    </div>
-    <div class="svc reveal rd1">
-      <div class="svc-top-line"></div>
-      <div class="svc-ghost">03</div>
-      <div class="svc-num">03</div>
-      <div class="svc-label">Opérationnel</div>
-      <h3 class="svc-title">Coordination opérationnelle</h3>
-      <p class="svc-desc">Organisation des arrivées, départs et interventions nécessaires au bon fonctionnement du logement, sans que vous ayez à intervenir.</p>
-    </div>
-    <div class="svc reveal rd2">
-      <div class="svc-top-line"></div>
-      <div class="svc-ghost">04</div>
-      <div class="svc-num">04</div>
-      <div class="svc-label">Suivi</div>
-      <h3 class="svc-title">Accompagnement propriétaire</h3>
-      <p class="svc-desc">Un interlocuteur unique et un suivi transparent de l'activité, avec des rapports réguliers et une communication directe en permanence.</p>
-    </div>
-  </div>
-  <div class="platforms reveal" style="margin-top:2rem">
-    <div class="plat">Airbnb</div>
-    <div class="plat">Booking.com</div>
-    <div class="plat">Abritel</div>
-    <div class="plat">Expedia</div>
-    <div class="plat" style="color:var(--text3);border-style:dashed">& autres</div>
-  </div>
-</section>
-
-<!-- ═══════════ VALEUR ═══════════ -->
-<section id="valeur">
-  <div class="reveal">
-    <div class="s-tag">Notre approche</div>
-    <h2 class="s-title">Plus qu'un simple <em>co-hôte</em></h2>
-    <p class="s-sub">Notre approche repose sur trois piliers fondamentaux qui font la différence sur le long terme.</p>
-  </div>
-  <div class="valeur-grid">
-    <div class="val-card reveal">
-      <div class="val-icon">📈</div>
-      <div class="val-num">01</div>
-      <h3 class="val-title">Performance</h3>
-      <p class="val-desc">Chaque logement possède un potentiel inexploité que nous aidons à révéler grâce à une analyse rigoureuse du marché et des données de performance.</p>
-    </div>
-    <div class="val-card reveal rd1">
-      <div class="val-icon">⭐</div>
-      <div class="val-num">02</div>
-      <h3 class="val-title">Expérience voyageur</h3>
-      <p class="val-desc">Une expérience fluide et mémorable génère de meilleurs avis, favorise les réservations et fidélise les voyageurs sur la durée.</p>
-    </div>
-    <div class="val-card reveal rd2">
-      <div class="val-icon">🔍</div>
-      <div class="val-num">03</div>
-      <h3 class="val-title">Transparence</h3>
-      <p class="val-desc">Une communication claire, des comptes-rendus réguliers et un suivi détaillé de chaque action réalisée sur votre bien, sans zone d'ombre.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════ PROCESSUS ═══════════ -->
-<section id="processus">
-  <div class="reveal">
-    <div class="s-tag">Méthode</div>
-    <h2 class="s-title">Comment nous <em>travaillons</em></h2>
-  </div>
-  <div class="process-wrap">
-    <div class="process-steps">
-      <div class="ps act" onclick="togglePs(this)">
-        <div class="ps-row"><span class="ps-num">01</span><span class="ps-name">Analyse du logement</span></div>
-        <div class="ps-body">Étude approfondie de votre annonce, de votre positionnement et de votre marché local en Moselle pour établir un diagnostic précis.</div>
+  <div class="hero-content">
+    <div class="hero-left">
+      <div class="hero-eyebrow">
+        <span class="hero-eyebrow-bar"></span>
+        Gestion locative · Moselle
       </div>
-      <div class="ps" onclick="togglePs(this)">
-        <div class="ps-row"><span class="ps-num">02</span><span class="ps-name">Recommandations</span></div>
-        <div class="ps-body">Identification des opportunités d'amélioration concrètes, priorisées par impact potentiel sur votre rentabilité.</div>
-      </div>
-      <div class="ps" onclick="togglePs(this)">
-        <div class="ps-row"><span class="ps-num">03</span><span class="ps-name">Mise en place</span></div>
-        <div class="ps-body">Déploiement des optimisations et organisation structurée de la gestion quotidienne sans perturber votre activité.</div>
-      </div>
-      <div class="ps" onclick="togglePs(this)">
-        <div class="ps-row"><span class="ps-num">04</span><span class="ps-name">Suivi continu</span></div>
-        <div class="ps-body">Amélioration continue des performances et de l'expérience voyageur, semaine après semaine, avec des rapports transparents.</div>
+      <h1 class="hero-h1">
+        <span class="hero-h1-static">La gestion locative</span>
+        <span class="hero-h1-accent">
+          <span class="hero-rotate-wrap">
+            <span class="hero-rotate-words">
+              <span class="hero-rotate-word">nouvelle génération.</span>
+              <span class="hero-rotate-word">qui performe.</span>
+              <span class="hero-rotate-word">transparente.</span>
+              <span class="hero-rotate-word">sur mesure.</span>
+              <span class="hero-rotate-word">nouvelle génération.</span>
+            </span>
+          </span>
+        </span>
+      </h1>
+      <p class="hero-p">Nous accompagnons les propriétaires en Moselle dans l'optimisation, l'exploitation et la gestion quotidienne de leurs biens — pour une rentabilité maximale et une expérience voyageur irréprochable.</p>
+      <div class="hero-btns">
+        <a href="#contact" class="btn-primary" data-magnetic data-cursor-label="Commencer">
+          Demander un audit gratuit
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a href="#services" class="btn-secondary" data-magnetic>Découvrir nos services</a>
       </div>
     </div>
-    <div class="process-visual reveal rd2">
-      <div class="pv-box">
-        <div class="pv-title">Approche Renova·Stay</div>
-        <div class="pv-sub">Une gestion rigoureuse, des résultats durables.</div>
-        <div class="pv-checklist">
-          <div class="pv-check done">Disponibilité 7 jours sur 7</div>
-          <div class="pv-check done">Rapports mensuels détaillés</div>
-          <div class="pv-check done">Interlocuteur unique dédié</div>
-          <div class="pv-check done">Coordination opérationnelle complète</div>
-          <div class="pv-check done">Toutes plateformes gérées</div>
+
+    <div class="hero-stats">
+      <div class="hstat" data-hover>
+        <div class="hstat-icon">🗓️</div>
+        <div>
+          <div class="hstat-title">Réactivité 7j/7</div>
+          <div class="hstat-sub">Disponibles chaque jour pour vous et vos voyageurs, sans exception.</div>
+        </div>
+        <div class="hstat-live"><span class="hstat-live-dot"></span>Active</div>
+      </div>
+      <div class="hstat" data-hover>
+        <div class="hstat-icon">🤝</div>
+        <div>
+          <div class="hstat-title">Accompagnement personnalisé</div>
+          <div class="hstat-sub">Un interlocuteur unique dédié à chaque propriétaire.</div>
+        </div>
+      </div>
+      <div class="hstat" data-hover>
+        <div class="hstat-icon">⚙️</div>
+        <div>
+          <div class="hstat-title">Service sur mesure</div>
+          <div class="hstat-sub">Des solutions adaptées à chaque bien et chaque objectif.</div>
         </div>
       </div>
     </div>
   </div>
+
+  <div class="hero-scroll-hint">
+    <span class="hero-scroll-label">Défiler</span>
+    <div class="hero-scroll-line"></div>
+  </div>
 </section>
 
-<!-- ═══════════ SIMULATEUR ═══════════ -->
-<section id="simulateur">
-  <div class="reveal" style="text-align:center;max-width:600px;margin:0 auto 0">
-    <div class="s-tag" style="justify-content:center">Outil interactif</div>
-    <h2 class="s-title">Estimez votre <em>potentiel</em></h2>
-    <p class="s-sub" style="margin:0 auto">Obtenez une estimation indicative des revenus mensuels de votre bien selon son type et sa localisation en Moselle.</p>
+<!-- ═══ MARQUEE ═══ -->
+<div class="marquee-band">
+  <div class="marquee-track">
+    <div class="marquee-item">Gestion locative<span class="marquee-sep"></span></div>
+    <div class="marquee-item">Moselle<span class="marquee-sep"></span></div>
+    <div class="marquee-item">Optimisation d'annonces<span class="marquee-sep"></span></div>
+    <div class="marquee-item">Renova Stay<span class="marquee-sep"></span></div>
+    <div class="marquee-item">Courte durée<span class="marquee-sep"></span></div>
+    <div class="marquee-item">Airbnb · Booking<span class="marquee-sep"></span></div>
+    <div class="marquee-item">Expérience voyageur<span class="marquee-sep"></span></div>
+    <div class="marquee-item">7j/7<span class="marquee-sep"></span></div>
+    <div class="marquee-item">Gestion locative<span class="marquee-sep"></span></div>
+    <div class="marquee-item">Moselle<span class="marquee-sep"></span></div>
+    <div class="marquee-item">Optimisation d'annonces<span class="marquee-sep"></span></div>
+    <div class="marquee-item">Renova Stay<span class="marquee-sep"></span></div>
+    <div class="marquee-item">Courte durée<span class="marquee-sep"></span></div>
+    <div class="marquee-item">Airbnb · Booking<span class="marquee-sep"></span></div>
+    <div class="marquee-item">Expérience voyageur<span class="marquee-sep"></span></div>
+    <div class="marquee-item">7j/7<span class="marquee-sep"></span></div>
   </div>
-  <div class="sim-wrap reveal">
-    <div class="sim-grid">
-      <div class="sim-field">
-        <label>Type de logement</label>
-        <select id="simType" onchange="calcSim()">
-          <option value="studio">Studio / T1</option>
-          <option value="t2">T2 — 2 pièces</option>
-          <option value="t3">T3 — 3 pièces</option>
-          <option value="maison">Maison / Villa</option>
-        </select>
-      </div>
-      <div class="sim-field">
-        <label>Secteur Moselle</label>
-        <select id="simZone" onchange="calcSim()">
-          <option value="metz">Metz & agglomération</option>
-          <option value="thionville">Luxembourg et Frontière</option>
-          <option value="sarreguemines">Sarreguemines</option>
-          <option value="forbach">Forbach & St avold</option>
-          <option value="rural">Zone rurale / autre</option>
-        </select>
-      </div>
-      <div class="sim-field">
-        <label>Nuits estimées / mois</label>
-        <input type="range" id="simNuits" min="5" max="28" value="16" oninput="calcSim();document.getElementById('simNuitsVal').textContent=this.value" style="margin-top:.5rem;width:100%;accent-color:var(--gold)">
-        <div style="font-size:.7rem;color:var(--text2);margin-top:.4rem"><span id="simNuitsVal">16</span> nuits / mois</div>
-      </div>
-      <div class="sim-field">
-        <label>Prix / nuit estimé</label>
-        <input type="range" id="simPrice" min="30" max="200" value="70" step="5" oninput="calcSim();document.getElementById('simPriceVal').textContent=this.value+'€'" style="margin-top:.5rem;width:100%;accent-color:var(--gold)">
-        <div style="font-size:.7rem;color:var(--text2);margin-top:.4rem"><span id="simPriceVal">70€</span> par nuit</div>
-      </div>
-    </div>
-    <div class="sim-result">
+</div>
+
+<!-- ═══ SERVICES ═══ -->
+<section id="services" class="section bg-deep">
+  <div class="container">
+    <div class="services-header">
       <div>
-        <div class="sim-out-label">Revenu brut estimé</div>
-        <div class="sim-out-val" id="simOut">1 120€</div>
-        <div class="sim-disclaimer">Estimation indicative · Résultats variables selon le bien</div>
+        <div class="section-tag rev-up"><span class="section-tag-bar"></span>Services</div>
+        <h2 class="serif word-reveal rev-up">Une prise en charge <em>complète</em></h2>
       </div>
-      <div style="text-align:right">
-        <div class="sim-out-label">Avec Renova·Stay</div>
-        <div style="font-size:.8rem;color:var(--text2);margin-top:.4rem;line-height:1.7">Optimisation des<br>annonces incluse</div>
-      </div>
+      <p class="section-lead rev-up">De la communication voyageurs à la coordination terrain — nous gérons chaque aspect de votre activité locative sur toutes les plateformes.</p>
     </div>
-    <div class="sim-cta">
-      <button class="btn-primary" onclick="scrollTo('#audit')"><span>Obtenir un audit réel gratuit →</span></button>
+    <div class="services-grid rev-up">
+      <div class="service-card tilt-card">
+        <div class="service-num">01</div>
+        <div class="service-chip">Communication</div>
+        <div class="service-title">Gestion voyageurs</div>
+        <p class="service-desc">Nous assurons les échanges avec les voyageurs avant, pendant et après leur séjour pour une expérience irréprochable à chaque étape.</p>
+      </div>
+      <div class="service-card tilt-card">
+        <div class="service-num">02</div>
+        <div class="service-chip">Performance</div>
+        <div class="service-title">Optimisation des annonces</div>
+        <p class="service-desc">Analyse des performances, amélioration des descriptions, optimisation du positionnement et valorisation du bien sur toutes les plateformes.</p>
+      </div>
+      <div class="service-card tilt-card">
+        <div class="service-num">03</div>
+        <div class="service-chip">Opérationnel</div>
+        <div class="service-title">Coordination opérationnelle</div>
+        <p class="service-desc">Organisation des arrivées, départs et interventions nécessaires au bon fonctionnement du logement, sans que vous ayez à intervenir.</p>
+      </div>
+      <div class="service-card tilt-card">
+        <div class="service-num">04</div>
+        <div class="service-chip">Suivi</div>
+        <div class="service-title">Accompagnement propriétaire</div>
+        <p class="service-desc">Un interlocuteur unique et un suivi transparent de l'activité, avec des rapports réguliers et une communication directe en permanence.</p>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════ ZONE ═══════════ -->
-<section id="zone">
-  <div class="reveal">
-    <div class="s-tag">Zone d'intervention</div>
-    <h2 class="s-title">Basés en <em>Moselle</em>,<br>à votre service.</h2>
-  </div>
-  <div class="zone-wrap">
-    <div class="zone-text">
-      <p>Nous intervenons sur l'ensemble du département de la Moselle et ses alentours, avec une connaissance fine du marché local.</p>
-      <div class="zone-cities">
-        <div class="zcity">Metz &amp; agglomération</div>
-        <div class="zcity">Luxembourg &amp; vallée de la Moselle</div>
-        <div class="zcity">Sarreguemines &amp; Est mosellan</div>
-        <div class="zcity">Forbach &amp; St avold</div>
-        <div class="zcity">Ensemble du département 57</div>
-      </div>
-      <div style="margin-top:2rem;padding:1.5rem;border:1px solid var(--border2);background:var(--navy2)">
-        <div style="font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:var(--text3);margin-bottom:.5rem">Zone active</div>
-        <div style="font-size:.85rem;color:var(--text2)">Moselle (57) · Grand Est</div>
-      </div>
+<!-- ═══ PLATFORMS ═══ -->
+<div class="platform-strip">
+  <div class="platform-strip-inner">
+    <span class="platform-label">Plateformes gérées</span>
+    <div class="platform-list">
+      <div class="platform-pill"><span class="platform-dot" style="background:#FF5A5F"></span>Airbnb</div>
+      <div class="platform-pill"><span class="platform-dot" style="background:#003580"></span>Booking.com</div>
+      <div class="platform-pill"><span class="platform-dot" style="background:#E7711B"></span>Abritel</div>
+      <div class="platform-pill"><span class="platform-dot" style="background:#00A9CE"></span>Expedia</div>
+      <div class="platform-pill"><span class="platform-dot" style="background:#C8A84B"></span>& autres</div>
     </div>
-    <div class="map-svg-wrap reveal rd1">
-      <div class="map-badge"><span class="map-pulse"></span>Département de la Moselle (57)</div>
-      <svg viewBox="0 0 360 260" width="100%" style="display:block">
-        <rect width="360" height="260" fill="var(--navy2)" rx="0"/>
-        <!-- Background grid -->
-        <defs>
-          <pattern id="mapgrid" width="20" height="20" patternUnits="userSpaceOnUse">
-            <path d="M20 0L0 0 0 20" fill="none" stroke="rgba(196,153,58,0.06)" stroke-width=".5"/>
-          </pattern>
-        </defs>
-        <rect width="360" height="260" fill="url(#mapgrid)"/>
-        <!-- Moselle department shape -->
-        <path d="M75 35 Q95 22 135 26 Q175 18 215 28 Q255 22 285 48 Q315 68 308 105 Q318 135 290 162 Q262 188 222 194 Q182 204 142 194 Q102 200 72 176 Q42 153 46 118 Q36 88 50 63 Q60 42 75 35Z" fill="rgba(14,30,56,0.8)" stroke="rgba(196,153,58,0.35)" stroke-width="1.2"/>
-        <!-- Rivière Moselle -->
-        <path d="M118 42 Q128 68 138 98 Q143 128 158 153 Q168 172 172 193" fill="none" stroke="rgba(100,160,255,0.35)" stroke-width="2.5" stroke-linecap="round"/>
-        <text x="175" y="115" fill="rgba(100,160,255,0.45)" font-size="7" font-family="DM Sans" letter-spacing="1">Moselle</text>
-        <!-- Routes -->
-        <path d="M88 78 Q138 73 188 78 Q238 83 278 108" fill="none" stroke="rgba(196,153,58,0.1)" stroke-width="1.5" stroke-dasharray="4,3"/>
-        <!-- METZ - principal -->
-        <g id="mtz">
-          <circle cx="163" cy="97" r="7" fill="rgba(196,153,58,0.2)" stroke="var(--gold)" stroke-width="1.2"/>
-          <circle cx="163" cy="97" r="14" fill="none" stroke="rgba(196,153,58,0.35)" stroke-width=".8">
-            <animate attributeName="r" values="10;20;10" dur="3s" repeatCount="indefinite"/>
-            <animate attributeName="opacity" values=".6;0;.6" dur="3s" repeatCount="indefinite"/>
-          </circle>
-          <circle cx="163" cy="97" r="3.5" fill="var(--gold)"/>
-          <text x="174" y="93" fill="var(--gold)" font-size="9.5" font-family="DM Sans" font-weight="600">METZ</text>
-          <text x="174" y="104" fill="rgba(196,153,58,0.55)" font-size="7" font-family="DM Sans">Préfecture · 57000</text>
-        </g>
-        <!-- THIONVILLE -->
-        <g>
-          <circle cx="168" cy="50" r="4.5" fill="rgba(196,153,58,0.5)" stroke="var(--gold)" stroke-width=".8"/>
-          <text x="178" y="47" fill="rgba(196,153,58,0.9)" font-size="8" font-family="DM Sans" font-weight="500">THIONVILLE</text>
-          <text x="178" y="57" fill="rgba(196,153,58,0.45)" font-size="6.5" font-family="DM Sans">57100</text>
-        </g>
-        <!-- SARREGUEMINES -->
-        <g>
-          <circle cx="230" cy="68" r="4" fill="rgba(196,153,58,0.4)" stroke="var(--gold)" stroke-width=".7"/>
-          <text x="240" y="65" fill="rgba(196,153,58,0.75)" font-size="7.5" font-family="DM Sans">SARREGUEMINES</text>
-        </g>
-        <!-- FORBACH -->
-        <g>
-          <circle cx="102" cy="128" r="4" fill="rgba(196,153,58,0.4)" stroke="var(--gold)" stroke-width=".7"/>
-          <text x="58" y="125" fill="rgba(196,153,58,0.75)" font-size="7.5" font-family="DM Sans">FORBACH</text>
-        </g>
-        <!-- SARREBOURG -->
-        <g>
-          <circle cx="192" cy="155" r="3.5" fill="rgba(196,153,58,0.35)" stroke="var(--gold)" stroke-width=".7"/>
-          <text x="200" y="152" fill="rgba(196,153,58,0.6)" font-size="7" font-family="DM Sans">SARREBOURG</text>
-        </g>
-        <!-- Zone couverte halo -->
-        <ellipse cx="183" cy="118" rx="120" ry="90" fill="rgba(196,153,58,0.025)" stroke="none"/>
-        <!-- Légende -->
-        <rect x="12" y="220" width="335" height="32" fill="rgba(11,22,41,0.6)" rx="2"/>
-        <circle cx="26" cy="237" r="5" fill="rgba(196,153,58,0.6)" stroke="var(--gold)" stroke-width=".7"/>
-        <text x="36" y="240" fill="rgba(196,153,58,0.7)" font-size="7" font-family="DM Sans">Ville principale</text>
-        <rect x="125" y="232" width="8" height="8" fill="rgba(196,153,58,0.15)" stroke="rgba(196,153,58,.3)" stroke-width=".7"/>
-        <text x="137" y="240" fill="rgba(196,153,58,0.6)" font-size="7" font-family="DM Sans">Zone d'intervention</text>
-        <path d="M230 234 Q240 234 250 236" fill="none" stroke="rgba(100,160,255,0.4)" stroke-width="1.5" stroke-linecap="round"/>
-        <text x="256" y="240" fill="rgba(100,160,255,0.5)" font-size="7" font-family="DM Sans">Rivière</text>
-      </svg>
+  </div>
+</div>
+
+<!-- ═══ APPROCHE / PILIERS ═══ -->
+<section id="approche" class="section bg-navy">
+  <div class="container">
+    <div class="piliers-intro">
+      <div>
+        <div class="section-tag rev-up"><span class="section-tag-bar"></span>Notre approche</div>
+        <h2 class="serif word-reveal rev-up">Plus qu'un simple <em>co-hôte</em></h2>
+      </div>
+      <p class="section-lead rev-up">Notre approche repose sur trois piliers fondamentaux qui font la différence sur le long terme pour chaque propriétaire que nous accompagnons.</p>
+    </div>
+    <div class="piliers-grid">
+      <div class="pilier-card tilt-card rev-up">
+        <div class="pilier-icon">📈</div>
+        <span class="pilier-num">01</span>
+        <div class="pilier-title">Performance</div>
+        <p class="pilier-desc">Chaque logement possède un potentiel inexploité que nous aidons à révéler grâce à une analyse rigoureuse du marché et des données de performance sur les plateformes.</p>
+      </div>
+      <div class="pilier-card tilt-card rev-up">
+        <div class="pilier-icon">⭐</div>
+        <span class="pilier-num">02</span>
+        <div class="pilier-title">Expérience voyageur</div>
+        <p class="pilier-desc">Une expérience fluide et mémorable génère de meilleurs avis, favorise les réservations directes et fidélise les voyageurs sur la durée.</p>
+      </div>
+      <div class="pilier-card tilt-card rev-up">
+        <div class="pilier-icon">🔍</div>
+        <span class="pilier-num">03</span>
+        <div class="pilier-title">Transparence</div>
+        <p class="pilier-desc">Une communication claire, des comptes-rendus réguliers et un suivi détaillé de chaque action réalisée sur votre bien, sans zone d'ombre.</p>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════ PROPOS ═══════════ -->
-<section id="propos">
-  <div class="reveal">
-    <div class="s-tag">À propos</div>
-    <h2 class="s-title">Notre <em>vision</em></h2>
-  </div>
-  <div class="propos-grid">
-    <div>
-      <blockquote class="propos-quote">"La gestion locative courte durée doit être plus simple, plus transparente et plus performante pour les propriétaires."</blockquote>
-      <p class="propos-p">Notre mission est d'apporter une approche moderne de l'exploitation des locations saisonnières en Moselle, grâce à une organisation rigoureuse et une attention particulière portée à l'expérience voyageur.</p>
-      <p class="propos-p">Nous croyons que chaque propriétaire mérite un accompagnement à la hauteur de son investissement — sans compromis sur la qualité ni sur la transparence.</p>
-      <div style="font-size:.72rem;color:var(--text3);margin-top:1rem;letter-spacing:.05em">Renova·Stay · Moselle, France</div>
+<!-- ═══ POURQUOI NOUS ═══ -->
+<section id="pourquoi" class="section bg-ink">
+  <div class="container">
+    <!-- Comparison -->
+    <div class="compare-intro">
+      <div class="section-tag rev-up"><span class="section-tag-bar"></span>Pourquoi nous choisir</div>
+      <h2 class="serif word-reveal rev-up">Renova Stay <em>vs</em> gestion en solo</h2>
+      <p class="section-lead rev-up" style="margin-bottom:3rem">Comparez concrètement ce que nous apportons par rapport à une gestion autonome de votre bien.</p>
     </div>
-    <div>
-      <div class="distinctions">
-        <div class="dist"><span class="dist-arrow">→</span><span class="dist-text">Une gestion orientée performance, pas seulement réactive aux demandes entrantes.</span></div>
-        <div class="dist"><span class="dist-arrow">→</span><span class="dist-text">Un suivi transparent avec des rapports réguliers sur l'activité de votre bien.</span></div>
-        <div class="dist"><span class="dist-arrow">→</span><span class="dist-text">Une approche sur mesure adaptée à chaque logement et chaque propriétaire.</span></div>
-        <div class="dist"><span class="dist-arrow">→</span><span class="dist-text">Une attention constante portée à la qualité de l'expérience voyageur sur toutes les plateformes.</span></div>
-        <div class="dist"><span class="dist-arrow">→</span><span class="dist-text">Un interlocuteur unique, disponible 7j/7 et pleinement impliqué dans votre projet.</span></div>
+    <div class="compare-table rev-up">
+      <div class="compare-head">
+        <div class="compare-head-cell">Critère</div>
+        <div class="compare-head-cell highlight">Renova Stay</div>
+        <div class="compare-head-cell">Gestion solo</div>
       </div>
-      <div class="propos-badge">
-        <div class="pb-label">Ce que vous obtenez</div>
-        <div class="pb-items">
-          <div class="pb-item"><span class="pb-dot"></span>Disponibilité 7 jours sur 7</div>
-          <div class="pb-item"><span class="pb-dot"></span>Rapports mensuels détaillés</div>
-          <div class="pb-item"><span class="pb-dot"></span>Interlocuteur unique dédié</div>
-          <div class="pb-item"><span class="pb-dot"></span>Coordination opérationnelle complète</div>
-          <div class="pb-item"><span class="pb-dot"></span>Toutes plateformes gérées</div>
+      <div class="compare-row">
+        <div class="compare-cell feature">Disponibilité voyageurs</div>
+        <div class="compare-cell rs"><span class="compare-icon-yes">✓</span>7j/7, réponse rapide garantie</div>
+        <div class="compare-cell"><span class="compare-icon-meh">~</span>Variable, selon votre emploi du temps</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell feature">Optimisation des annonces</div>
+        <div class="compare-cell rs"><span class="compare-icon-yes">✓</span>Analyse continue & amélioration pro</div>
+        <div class="compare-cell"><span class="compare-icon-no">✗</span>Rarement mis à jour</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell feature">Coordination arrivées/départs</div>
+        <div class="compare-cell rs"><span class="compare-icon-yes">✓</span>Entièrement prise en charge</div>
+        <div class="compare-cell"><span class="compare-icon-no">✗</span>Vous devez être disponible</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell feature">Gestion des incidents</div>
+        <div class="compare-cell rs"><span class="compare-icon-yes">✓</span>Interlocuteur unique & réactif</div>
+        <div class="compare-cell"><span class="compare-icon-meh">~</span>Vous gérez seul chaque problème</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell feature">Rapports de performance</div>
+        <div class="compare-cell rs"><span class="compare-icon-yes">✓</span>Suivi mensuel détaillé</div>
+        <div class="compare-cell"><span class="compare-icon-no">✗</span>Aucun suivi structuré</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell feature">Multi-plateformes</div>
+        <div class="compare-cell rs"><span class="compare-icon-yes">✓</span>Toutes plateformes synchronisées</div>
+        <div class="compare-cell"><span class="compare-icon-meh">~</span>Difficile à gérer seul</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-cell feature">Tranquillité d'esprit</div>
+        <div class="compare-cell rs"><span class="compare-icon-yes">✓</span>Totale — nous gérons tout</div>
+        <div class="compare-cell"><span class="compare-icon-no">✗</span>Stress permanent</div>
+      </div>
+    </div>
+
+    <!-- Promise cards -->
+    <div style="margin-top:6rem">
+      <div class="section-tag rev-up"><span class="section-tag-bar"></span>Notre promesse</div>
+      <h2 class="serif word-reveal rev-up">Nos engagements <em>concrets</em></h2>
+      <div class="promise-grid">
+        <div class="promise-card rev-up">
+          <div class="promise-icon">⚡</div>
+          <div>
+            <div class="promise-title">Réactivité sans compromis</div>
+            <p class="promise-desc">Chaque message voyageur reçoit une réponse rapide, 7 jours sur 7. Vos voyageurs ne seront jamais laissés sans réponse.</p>
+          </div>
+        </div>
+        <div class="promise-card rev-up">
+          <div class="promise-icon">🔒</div>
+          <div>
+            <div class="promise-title">Transparence totale</div>
+            <p class="promise-desc">Vous avez accès à tout : rapport d'activité, échanges, interventions. Rien ne se passe sans que vous le sachiez.</p>
+          </div>
+        </div>
+        <div class="promise-card rev-up">
+          <div class="promise-icon">🎯</div>
+          <div>
+            <div class="promise-title">Stratégie sur mesure</div>
+            <p class="promise-desc">Pas de solution générique. Chaque bien est analysé et géré selon ses spécificités, sa localisation et ses objectifs propres.</p>
+          </div>
+        </div>
+        <div class="promise-card rev-up">
+          <div class="promise-icon">🤝</div>
+          <div>
+            <div class="promise-title">Un seul interlocuteur</div>
+            <p class="promise-desc">Vous n'êtes jamais ballotté entre différents services. Un contact direct, disponible, qui connaît votre bien par cœur.</p>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════ AUDIT ═══════════ -->
-<section id="audit">
+<!-- ═══ PROCESSUS ═══ -->
+<section id="processus" class="section bg-navy2">
+  <div class="container">
+    <div class="section-tag rev-up" style="margin-bottom:1.5rem"><span class="section-tag-bar"></span>Méthode</div>
+    <h2 class="serif word-reveal rev-up" style="margin-bottom:5rem">Comment nous <em>travaillons</em></h2>
+    <div class="process-layout">
+      <div class="timeline">
+        <div class="timeline-step rev-up">
+          <div class="tl-dot"></div>
+          <div class="tl-step-num">Étape 01</div>
+          <div class="tl-step-title">Analyse du logement</div>
+          <p class="tl-step-desc">Étude approfondie de votre annonce, de votre positionnement et du marché local en Moselle pour établir un diagnostic précis et personnalisé.</p>
+        </div>
+        <div class="timeline-step rev-up">
+          <div class="tl-dot"></div>
+          <div class="tl-step-num">Étape 02</div>
+          <div class="tl-step-title">Recommandations</div>
+          <p class="tl-step-desc">Identification des opportunités d'amélioration concrètes, priorisées par impact potentiel sur votre rentabilité et votre note voyageur.</p>
+        </div>
+        <div class="timeline-step rev-up">
+          <div class="tl-dot"></div>
+          <div class="tl-step-num">Étape 03</div>
+          <div class="tl-step-title">Mise en place</div>
+          <p class="tl-step-desc">Déploiement méthodique des optimisations et organisation complète de la gestion quotidienne — sans perturber votre activité.</p>
+        </div>
+        <div class="timeline-step rev-up">
+          <div class="tl-dot"></div>
+          <div class="tl-step-num">Étape 04</div>
+          <div class="tl-step-title">Suivi continu</div>
+          <p class="tl-step-desc">Amélioration continue des performances et de l'expérience voyageur, semaine après semaine, avec des rapports transparents et réguliers.</p>
+        </div>
+      </div>
+      <div class="process-panel rev-right">
+        <div class="process-panel-head">
+          <div class="pp-label">Approche Renova Stay</div>
+          <div class="pp-title">Une gestion rigoureuse,<br>des résultats durables.</div>
+        </div>
+        <div class="process-panel-body">
+          <ul class="pp-list">
+            <li class="pp-item"><div class="pp-item-icon">🗓️</div>Disponibilité 7 jours sur 7</li>
+            <li class="pp-item"><div class="pp-item-icon">📊</div>Rapports mensuels détaillés</li>
+            <li class="pp-item"><div class="pp-item-icon">🤝</div>Interlocuteur unique dédié</li>
+            <li class="pp-item"><div class="pp-item-icon">🔧</div>Coordination opérationnelle complète</li>
+            <li class="pp-item"><div class="pp-item-icon">🌍</div>Toutes plateformes gérées</li>
+            <li class="pp-item"><div class="pp-item-icon">📍</div>Expertise locale Moselle</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MAP — MOSELLE ═══ -->
+<div id="zone" class="gold-rule"></div>
+<div style="background:var(--navy3)">
+  <div class="map-layout">
+    <div class="map-left">
+      <div class="section-tag rev-left"><span class="section-tag-bar"></span>Zone d'intervention</div>
+      <h2 class="serif word-reveal rev-left">Basés en <em>Moselle</em>,<br>à votre service.</h2>
+      <p class="section-lead rev-left" style="margin-bottom:2.5rem">Nous intervenons sur l'ensemble du département de la Moselle et ses alentours, avec une connaissance fine du marché local et des spécificités touristiques de la région.</p>
+      <div class="zone-list">
+        <div class="zone-item rev-left"><span class="zone-pin">📍</span>Metz &amp; agglomération</div>
+        <div class="zone-item rev-left"><span class="zone-pin">📍</span>Thionville &amp; vallée de la Moselle</div>
+        <div class="zone-item rev-left"><span class="zone-pin">📍</span>Sarreguemines &amp; Est mosellan</div>
+        <div class="zone-item rev-left"><span class="zone-pin">📍</span>Forbach &amp; bassin houiller</div>
+        <div class="zone-item rev-left"><span class="zone-pin">📍</span>Sarrebourg &amp; Pays de Phalsbourg</div>
+        <div class="zone-item rev-left"><span class="zone-pin">📍</span>Ensemble du département 57</div>
+      </div>
+    </div>
+    <div class="map-right">
+      <div id="leaflet-map"></div>
+      <div class="map-overlay">
+        <div class="mo-title"><span class="mo-live"></span>Zone active</div>
+        <div class="mo-sub">Moselle (57) · Grand Est · France</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ À PROPOS ═══ -->
+<section id="propos" class="section bg-deep">
+  <div class="container">
+    <div class="about-grid">
+      <div>
+        <div class="section-tag rev-left"><span class="section-tag-bar"></span>À propos</div>
+        <h2 class="serif word-reveal rev-left">Notre <em>vision</em></h2>
+        <blockquote class="about-quote rev-left">"La gestion locative courte durée doit être plus simple, plus transparente et plus performante pour les propriétaires."</blockquote>
+        <p class="about-body rev-left">Notre mission est d'apporter une approche moderne de l'exploitation des locations saisonnières en Moselle, grâce à une organisation rigoureuse et une attention particulière portée à l'expérience voyageur.<br><br>Nous croyons que chaque propriétaire mérite un accompagnement à la hauteur de son investissement — sans compromis sur la qualité ni sur la transparence.</p>
+        <div class="about-signature rev-left">
+          <div class="about-sig-line"></div>
+          <div class="about-sig-text">Renova Stay · Moselle, France</div>
+        </div>
+      </div>
+      <div class="about-panel rev-right">
+        <div class="about-panel-head"><div class="about-panel-title">Ce qui nous distingue</div></div>
+        <div class="about-panel-body">
+          <ul class="about-list">
+            <li class="about-item"><span class="about-arrow">→</span>Une gestion orientée performance, pas seulement réactive aux demandes entrantes.</li>
+            <li class="about-item"><span class="about-arrow">→</span>Un suivi transparent avec des rapports réguliers sur l'activité de votre bien.</li>
+            <li class="about-item"><span class="about-arrow">→</span>Une approche sur mesure adaptée à chaque logement et chaque propriétaire.</li>
+            <li class="about-item"><span class="about-arrow">→</span>Une attention constante portée à la qualité de l'expérience voyageur sur toutes les plateformes.</li>
+            <li class="about-item"><span class="about-arrow">→</span>Un interlocuteur unique, disponible 7j/7 et pleinement impliqué dans votre projet.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FAQ ═══ -->
+<section id="faq" class="section bg-navy">
+  <div class="container">
+    <div class="section-tag rev-up" style="margin-bottom:1.5rem"><span class="section-tag-bar"></span>FAQ</div>
+    <h2 class="serif word-reveal rev-up" style="margin-bottom:4rem">Questions <em>fréquentes</em></h2>
+    <div class="faq-layout">
+      <div class="faq-list rev-left">
+        <div class="faq-item">
+          <button class="faq-q">
+            Combien coûte votre service de gestion ?
+            <span class="faq-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
+          </button>
+          <div class="faq-a">Nos tarifs sont construits sur mesure selon le type de bien, le volume d'activité et les services souhaités. Contactez-nous pour obtenir une proposition personnalisée — l'audit initial est totalement gratuit et sans engagement.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">
+            Je gère déjà mes annonces moi-même, pourquoi faire appel à vous ?
+            <span class="faq-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
+          </button>
+          <div class="faq-a">Gérer soi-même demande une disponibilité permanente, une expertise en optimisation tarifaire, en rédaction d'annonces et en gestion des situations complexes. Nous libérons votre temps tout en maximisant les performances de votre bien grâce à notre expertise et à notre approche data.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">
+            Quelles plateformes gérez-vous ?
+            <span class="faq-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
+          </button>
+          <div class="faq-a">Nous gérons toutes les grandes plateformes : Airbnb, Booking.com, Abritel (VRBO), Expedia et d'autres selon votre positionnement. Nous synchronisons les calendriers pour éviter tout double booking.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">
+            Restez-vous informé de tout ce qui se passe dans mon logement ?
+            <span class="faq-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
+          </button>
+          <div class="faq-a">Absolument. Vous recevez des rapports réguliers et nous vous informons de tout événement notable. La transparence est au cœur de notre approche — vous gardez une visibilité totale sur votre bien.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">
+            Comment se déroule l'audit gratuit ?
+            <span class="faq-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
+          </button>
+          <div class="faq-a">Envoyez-nous le lien de votre annonce par email ou contactez-nous directement. Nous analysons le titre, les photos, la description et le positionnement tarifaire, puis vous remettons nos recommandations concrètes — le tout gratuitement et sous 48h.</div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-q">
+            Intervenez-vous uniquement en Moselle ?
+            <span class="faq-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
+          </button>
+          <div class="faq-a">Nous sommes basés en Moselle et c'est notre zone d'expertise principale. Nous pouvons étudier des demandes dans les départements limitrophes au cas par cas. N'hésitez pas à nous contacter pour en discuter.</div>
+        </div>
+      </div>
+      <div class="faq-visual rev-right">
+        <div class="faq-visual-top">
+          <div class="faq-visual-label">Contactez-nous directement</div>
+          <div class="faq-visual-title">Une question ?<br>On vous répond vite.</div>
+        </div>
+        <div class="faq-visual-body">
+          <div class="faq-contact-links">
+            <a href="mailto:delio.casciu10@gmail.com" class="faq-contact-link">
+              <div class="faq-contact-icon">✉️</div>
+              <div>
+                <div class="faq-contact-text-label">Email</div>
+                <div class="faq-contact-text-val">delio.casciu10@gmail.com</div>
+              </div>
+            </a>
+            <a href="tel:+33783367640" class="faq-contact-link">
+              <div class="faq-contact-icon">📞</div>
+              <div>
+                <div class="faq-contact-text-label">Téléphone</div>
+                <div class="faq-contact-text-val">+33 7 83 36 76 40</div>
+              </div>
+            </a>
+            <a href="#contact" class="faq-contact-link">
+              <div class="faq-contact-icon">📋</div>
+              <div>
+                <div class="faq-contact-text-label">Audit gratuit</div>
+                <div class="faq-contact-text-val">Demander une analyse de mon bien</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CONTACT / AUDIT CTA ═══ -->
+<section id="contact" class="section audit-section">
+  <div class="audit-glow"></div>
   <div class="audit-inner">
-    <div class="reveal">
-      <div class="s-tag" style="justify-content:center">Offre de bienvenue</div>
-      <h2 class="s-title" style="text-align:center">Recevez une analyse <em>gratuite</em><br>de votre annonce</h2>
-      <p class="s-sub" style="text-align:center;margin:0 auto 0">Un audit complet pour identifier les axes d'amélioration et révéler le véritable potentiel de votre logement en Moselle.</p>
-    </div>
-    <div class="audit-items">
-      <div class="audit-item reveal">
-        <div class="ai-ico">📝</div>
-        <div class="ai-label">Titre de l'annonce</div>
-      </div>
-      <div class="audit-item reveal rd1">
-        <div class="ai-ico">📸</div>
-        <div class="ai-label">Qualité des photos</div>
-      </div>
-      <div class="audit-item reveal rd2">
-        <div class="ai-ico">✍️</div>
-        <div class="ai-label">Description du bien</div>
-      </div>
-      <div class="audit-item reveal rd3">
-        <div class="ai-ico">💡</div>
-        <div class="ai-label">Points d'amélioration</div>
-      </div>
-    </div>
-    <div class="audit-cta-wrap">
-      <a href="mailto:delio.casciu10@gmail.com?subject=Demande%20d'audit%20gratuit%20-%20Renova%20Stay&body=Bonjour%2C%0A%0AJe%20souhaite%20recevoir%20un%20audit%20gratuit%20de%20mon%20annonce.%0A%0ALien%20de%20mon%20annonce%20%3A%20%0A%0AMerci." class="btn-primary" style="text-decoration:none;display:inline-block"><span>Recevoir mon audit gratuit</span></a>
-      <div class="audit-note">Gratuit &amp; sans engagement · Réponse sous 48h</div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════ FAQ ═══════════ -->
-<section id="faq">
-  <div class="reveal" style="text-align:center">
-    <div class="s-tag" style="justify-content:center">Questions fréquentes</div>
-    <h2 class="s-title" style="text-align:center">Tout ce que vous <em>devez savoir</em></h2>
-  </div>
-  <div class="faq-list">
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)"><span>Comment fonctionne la gestion complète ?</span><span class="faq-icon"></span></div>
-      <div class="faq-a">Nous prenons en charge l'intégralité de la gestion : communication avec les voyageurs, coordination des entrées/sorties, optimisation de vos annonces et suivi régulier. Vous restez informé à chaque étape sans avoir à intervenir au quotidien.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)"><span>Quelles plateformes gérez-vous ?</span><span class="faq-icon"></span></div>
-      <div class="faq-a">Nous gérons votre présence sur Airbnb, Booking.com, Abritel, Expedia et d'autres plateformes selon votre profil et vos objectifs. La gestion multi-plateforme est incluse dans notre accompagnement.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)"><span>Comment se passe le premier contact ?</span><span class="faq-icon"></span></div>
-      <div class="faq-a">Il suffit de nous écrire via le formulaire d'audit gratuit. Nous analysons votre annonce existante ou votre bien, puis nous vous proposons un rendez-vous pour discuter des possibilités d'optimisation.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)"><span>Intervenez-vous partout en Moselle ?</span><span class="faq-icon"></span></div>
-      <div class="faq-a">Oui, nous couvrons l'ensemble du département 57 : Metz et son agglomération, Thionville, Sarreguemines, Forbach, Sarrebourg et les zones rurales alentour.</div>
-    </div>
-    <div class="faq-item">
-      <div class="faq-q" onclick="toggleFaq(this)"><span>L'audit gratuit est-il vraiment sans engagement ?</span><span class="faq-icon"></span></div>
-      <div class="faq-a">Absolument. L'audit est offert sans condition ni engagement. C'est notre façon de vous démontrer concrètement la valeur que nous pouvons apporter avant toute collaboration.</div>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════ FOOTER ═══════════ -->
-<footer>
-  <div class="footer-top">
-    <div>
-      <div class="ft-logo"><b>Renova</b>·Stay</div>
-      <p class="ft-desc">La gestion locative nouvelle génération pour les locations courte durée en Moselle.</p>
-      <div class="ft-contact">
-        <a href="mailto:delio.casciu10@gmail.com">delio.casciu10@gmail.com</a>
-        <a href="https://wa.me/33783367640">07 83 36 76 40</a>
-        <div style="font-size:.72rem;color:var(--text3);margin-top:.4rem">Moselle (57) · Grand Est · France</div>
-      </div>
-    </div>
-    <div>
-      <div class="ft-col-title">Navigation</div>
-      <div class="ft-links">
-        <a href="#services">Services</a>
-        <a href="#valeur">Notre approche</a>
-        <a href="#processus">Méthode</a>
-        <a href="#zone">Zone d'intervention</a>
-        <a href="#propos">À propos</a>
-      </div>
-    </div>
-    <div>
-      <div class="ft-col-title">Plateformes</div>
-      <div class="ft-links">
-        <a href="#">Airbnb</a>
-        <a href="#">Booking.com</a>
-        <a href="#">Abritel</a>
-        <a href="#">Expedia</a>
-      </div>
-    </div>
-    <div>
-      <div class="ft-col-title">Légal</div>
-      <div class="ft-links">
-        <a href="#">Mentions légales</a>
-        <a href="#">Politique de confidentialité</a>
-      </div>
-    </div>
-  </div>
-  <div class="footer-bot">
-    <div class="footer-copy">© 2025 Renova·Stay. Tous droits réservés.</div>
-    <div class="footer-legal">
-      <a href="#">Mentions légales</a>
-      <a href="#">Confidentialité</a>
-    </div>
-  </div>
-</footer>
-
-<script>
-/* ─── CURSOR ─── */
-const cur=document.getElementById('cur'),ring=document.getElementById('cur-ring');
-let mx=0,my=0,rx=0,ry=0;
-document.addEventListener('mousemove',e=>{
-  mx=e.clientX;my=e.clientY;
-  cur.style.left=mx+'px';cur.style.top=my+'px';
-});
-(function anim(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(anim)})();
-document.querySelectorAll('a,button,.svc,.val-card,.ps,.faq-q,.zcity,.audit-item,.temo-btn,.cq,.chat-bubble').forEach(el=>{
-  el.addEventListener('mouseenter',()=>document.body.classList.add('cur-hover'));
-  el.addEventListener('mouseleave',()=>document.body.classList.remove('cur-hover'));
-});
-
-/* ─── PROGRESS BAR ─── */
-window.addEventListener('scroll',()=>{
-  const h=document.documentElement.scrollHeight-window.innerHeight;
-  document.getElementById('progress').style.width=(scrollY/h*100)+'%';
-});
-
-/* ─── LOADER ─── */
-let p=0;
-const lf=document.getElementById('lfill'),lp=document.getElementById('lpct');
-const li=setInterval(()=>{
-  p+=Math.random()*18;
-  if(p>=100){p=100;clearInterval(li);setTimeout(()=>document.getElementById('loader').classList.add('out'),400)}
-  lf.style.width=Math.min(p,100)+'%';
-  lp.textContent=Math.floor(Math.min(p,100))+'%';
-},70);
-
-/* ─── STARS ─── */
-const cv=document.getElementById('stars'),cx=cv.getContext('2d');
-function rs(){cv.width=innerWidth;cv.height=innerHeight}rs();
-window.addEventListener('resize',rs);
-const pts=Array.from({length:90},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.2+.3,vx:(Math.random()-.5)*.2,vy:(Math.random()-.5)*.2,o:Math.random()*.35+.08}));
-(function drawStars(){
-  cx.clearRect(0,0,cv.width,cv.height);
-  pts.forEach(p=>{
-    p.x+=p.vx;p.y+=p.vy;
-    if(p.x<0)p.x=cv.width;if(p.x>cv.width)p.x=0;
-    if(p.y<0)p.y=cv.height;if(p.y>cv.height)p.y=0;
-    cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);
-    cx.fillStyle=`rgba(196,153,58,${p.o})`;cx.fill();
-  });
-  pts.forEach((a,i)=>pts.slice(i+1).forEach(b=>{
-    const d=Math.hypot(a.x-b.x,a.y-b.y);
-    if(d<100){cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(b.x,b.y);cx.strokeStyle=`rgba(196,153,58,${.05*(1-d/100)})`;cx.lineWidth=.5;cx.stroke()}
-  }));
-  requestAnimationFrame(drawStars);
-})();
-
-/* ─── NAV STUCK ─── */
-window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('stuck',scrollY>60));
-
-/* ─── REVEAL ─── */
-const ro=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis')}),{threshold:.12});
-document.querySelectorAll('.reveal').forEach(r=>ro.observe(r));
-
-/* ─── SCROLL HELPER ─── */
-function scrollTo(id){document.querySelector(id).scrollIntoView({behavior:'smooth'})}
-
-/* ─── BURGER ─── */
-function toggleMob(){
-  document.getElementById('burger').classList.toggle('open');
-  document.getElementById('mobmenu').classList.toggle('open');
-}
-
-/* ─── PROCESS STEPS ─── */
-function togglePs(el){
-  document.querySelectorAll('.ps').forEach(p=>p.classList.remove('act'));
-  el.classList.add('act');
-}
-
-/* ─── FAQ ─── */
-function toggleFaq(q){
-  const a=q.nextElementSibling;
-  const open=a.classList.contains('open');
-  document.querySelectorAll('.faq-a').forEach(x=>x.classList.remove('open'));
-  document.querySelectorAll('.faq-q').forEach(x=>x.classList.remove('open'));
-  if(!open){a.classList.add('open');q.classList.add('open')}
-}
-
-/* ─── SIMULATEUR ─── */
-const baseRates={studio:{metz:60,thionville:55,sarreguemines:45,forbach:40,rural:35},t2:{metz:80,thionville:70,sarreguemines:58,forbach:52,rural:45},t3:{metz:100,thionville:90,sarreguemines:75,forbach:65,rural:58},maison:{metz:130,thionville:115,sarreguemines:95,forbach:85,rural:75}};
-function calcSim(){
-  const nuits=+document.getElementById('simNuits').value;
-  const price=+document.getElementById('simPrice').value;
-  const total=nuits*price;
-  document.getElementById('simOut').textContent=total.toLocaleString('fr-FR')+'€';
-}
-calcSim();
-
-/* ─── CHATBOT ─── */
-const responses={
-  services:"Renova·Stay prend en charge : la gestion voyageurs 7j/7, l'optimisation de vos annonces sur toutes les plateformes, la coordination opérationnelle (arrivées/départs), et l'accompagnement propriétaire avec rapports réguliers. 📋",
-  zone:"Nous intervenons sur tout le département de la Moselle (57) : Metz et agglomération, Thionville, Sarreguemines, Forbach, Sarrebourg et les zones rurales. 📍",
-  audit:"Pour votre audit gratuit, envoyez-nous un email à delio.casciu10@gmail.com ou utilisez le bouton 'Audit gratuit' en haut de page. Réponse sous 48h, sans engagement. ✉️",
-  default:"Merci pour votre message ! Pour toute question spécifique, contactez-nous directement : delio.casciu10@gmail.com ou au 07 83 36 76 40. Nous répondons rapidement ! 😊"
-};
-function toggleChat(){document.getElementById('chatPanel').classList.toggle('open')}
-function botReply(key){
-  const msgs=document.getElementById('chatMsgs');
-  const qr=document.getElementById('quickReplies');
-  const labels={services:'Vos services en détail ?',zone:'Vous intervenez où ?',audit:'Comment obtenir un audit ?'};
-  const um=document.createElement('div');um.className='msg user';um.textContent=labels[key]||key;msgs.appendChild(um);
-  qr.style.display='none';
-  setTimeout(()=>{
-    const bm=document.createElement('div');bm.className='msg bot';bm.textContent=responses[key]||responses.default;msgs.appendChild(bm);msgs.scrollTop=msgs.scrollHeight;
-  },600);
-  msgs.scrollTop=msgs.scrollHeight;
-}
-function sendMsg(){
-  const inp=document.getElementById('chatIn');
-  const txt=inp.value.trim();if(!txt)return;
-  const msgs=document.getElementById('chatMsgs');
-  document.getElementById('quickReplies').style.display='none';
-  const um=document.createElement('div');um.className='msg user';um.textContent=txt;msgs.appendChild(um);
-  inp.value='';msgs.scrollTop=msgs.scrollHeight;
-  const k=txt.toLowerCase().includes('service')?'services':txt.toLowerCase().includes('zone')||txt.toLowerCase().includes('interven')?'zone':txt.toLowerCase().includes('audit')?'audit':'default';
-  setTimeout(()=>{const bm=document.createElement('div');bm.className='msg bot';bm.textContent=responses[k];msgs.appendChild(bm);msgs.scrollTop=msgs.scrollHeight;},700);
-}
-
-/* ─── MAGNETIC BUTTONS ─── */
-document.querySelectorAll('.btn-primary,.btn-secondary,.nav-cta').forEach(btn=>{
-  btn.addEventListener('mousemove',e=>{
-    const r=btn.getBoundingClientRect();
-    const dx=(e.clientX-r.left-r.width/2)*.25;
-    const dy=(e.clientY-r.top-r.height/2)*.25;
-    btn.style.transform=`translate(${dx}px,${dy}px)`;
-  });
-  btn.addEventListener('mouseleave',()=>btn.style.transform='');
-});
-</script>
-</body>
-</html>
-HTMLEOF
-echo "Done"
+    <div class="section-tag rev-up"><span class="section-tag-bar"></span>Offre de
