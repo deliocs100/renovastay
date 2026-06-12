@@ -1,5 +1,4 @@
 cat > /mnt/user-data/outputs/index.html << 'ENDOFFILE'
-<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
