@@ -1,4 +1,4 @@
-cat > /mnt/user-data/outputs/index.html << 'ENDOFFILE'
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -35,6 +35,7 @@ cat > /mnt/user-data/outputs/index.html << 'ENDOFFILE'
 
   --w100: rgba(255,255,255,1.00);
   --w90:  rgba(255,255,255,0.90);
+  --w80:  rgba(255,255,255,0.80);
   --w70:  rgba(255,255,255,0.70);
   --w50:  rgba(255,255,255,0.50);
   --w30:  rgba(255,255,255,0.30);
@@ -173,6 +174,49 @@ body.cursor-video #cursor-ring  { width: 80px; height: 80px; border-width: 1px; 
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   MINI SOMMAIRE (TOC LATÉRAL)
+═══════════════════════════════════════════════════════════════ */
+#mini-toc {
+  position: fixed;
+  right: 28px; top: 50%;
+  transform: translateY(-50%);
+  z-index: 400;
+  display: flex; flex-direction: column;
+  align-items: flex-end; gap: 14px;
+}
+#mini-toc a {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; color: var(--w50);
+  font-size: .68rem; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase;
+  transition: color .3s;
+}
+#mini-toc a .toc-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  border: 1.5px solid var(--borderHi);
+  background: transparent;
+  transition: all .35s var(--ease-out);
+  flex-shrink: 0;
+}
+#mini-toc a .toc-label {
+  max-width: 0; overflow: hidden; white-space: nowrap;
+  opacity: 0; transition: max-width .35s var(--ease-out), opacity .25s;
+}
+#mini-toc a:hover .toc-label,
+#mini-toc a.active .toc-label {
+  max-width: 200px; opacity: 1;
+}
+#mini-toc a:hover, #mini-toc a.active { color: var(--gold2); }
+#mini-toc a:hover .toc-dot, #mini-toc a.active .toc-dot {
+  background: var(--gold); border-color: var(--gold);
+  box-shadow: 0 0 10px var(--goldGlow);
+  transform: scale(1.3);
+}
+@media (max-width: 1100px) {
+  #mini-toc { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
    NAVIGATION
 ═══════════════════════════════════════════════════════════════ */
 .nav {
@@ -254,11 +298,14 @@ body.cursor-video #cursor-ring  { width: 80px; height: 80px; border-width: 1px; 
     linear-gradient(to top, rgba(3,6,12,.8) 0%, transparent 40%);
 }
 .hero-video {
+  position: absolute; inset: 0;
   width: 100%; height: 100%;
   object-fit: cover; object-position: center;
   filter: brightness(.5) saturate(.7);
-  transition: opacity 1.2s ease;
+  transition: opacity 1.4s ease;
+  opacity: 0;
 }
+.hero-video.active { opacity: 1; }
 /* Fallback mesh when no video */
 .hero-mesh-fallback {
   position: absolute; inset: 0;
@@ -349,7 +396,7 @@ body.cursor-video #cursor-ring  { width: 80px; height: 80px; border-width: 1px; 
 }
 .hero-rotate-words {
   display: flex; flex-direction: column;
-  animation: rotateWords 6s ease-in-out infinite;
+  animation: rotateWords 10s ease-in-out infinite;
 }
 .hero-rotate-word {
   font-family: 'Cormorant Garamond', serif;
@@ -361,11 +408,12 @@ body.cursor-video #cursor-ring  { width: 80px; height: 80px; border-width: 1px; 
   background-clip: text;
 }
 @keyframes rotateWords {
-  0%,22%  { transform: translateY(0); }
-  25%,47% { transform: translateY(-100%); }
-  50%,72% { transform: translateY(-200%); }
-  75%,97% { transform: translateY(-300%); }
-  100%    { transform: translateY(-400%); }
+  0%,17%  { transform: translateY(0); }
+  20%,37% { transform: translateY(-100%); }
+  40%,57% { transform: translateY(-200%); }
+  60%,77% { transform: translateY(-300%); }
+  80%,97% { transform: translateY(-400%); }
+  100%    { transform: translateY(-500%); }
 }
 
 /* Hero paragraph */
@@ -916,9 +964,22 @@ h2.serif em { font-style: italic; font-weight: 300; color: var(--gold2); }
   padding: .85rem 1.1rem; border: 1px solid var(--border); border-radius: var(--r12);
   font-size: .875rem; font-weight: 300; color: var(--w50);
   transition: border-color .25s, color .25s, background .25s, transform .22s var(--ease-out);
+  cursor: pointer;
 }
-.zone-item:hover { border-color: var(--gold); color: var(--w80); background: var(--goldA10); transform: translateX(6px); }
+.zone-item:hover, .zone-item.active { border-color: var(--gold); color: var(--w80); background: var(--goldA10); transform: translateX(6px); }
 .zone-pin { color: var(--gold); font-size: .95rem; flex-shrink: 0; }
+
+/* Custom leaflet marker */
+.rs-marker {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--gold); border: 2px solid var(--ink);
+  box-shadow: 0 0 0 4px rgba(200,168,75,.18), 0 0 14px rgba(200,168,75,.6);
+}
+.rs-marker.rs-marker-main {
+  width: 22px; height: 22px;
+  background: var(--gold2);
+  box-shadow: 0 0 0 6px rgba(200,168,75,.18), 0 0 22px rgba(200,168,75,.7);
+}
 
 /* ═══════════════════════════════════════════════════════════════
    ABOUT / VISION
@@ -1099,6 +1160,23 @@ footer { background: #02040A; border-top: 1px solid var(--border); padding: 5.5r
 @keyframes animFadeIn { from { opacity:0; } to { opacity:1; } }
 
 /* ═══════════════════════════════════════════════════════════════
+   ACCESSIBILITY
+═══════════════════════════════════════════════════════════════ */
+a:focus-visible, button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
    RESPONSIVE
 ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 1100px) {
@@ -1170,7 +1248,7 @@ footer { background: #02040A; border-top: 1px solid var(--border); padding: 5.5r
 </div>
 
 <!-- ═══ FLOATING CALL BUTTON ═══ -->
-<a href="tel:+33783367640" class="float-btn-call" id="float-call">
+<a href="tel:+33783367640" class="float-btn-call" id="float-call" data-cursor-label="Appeler">
   <span class="float-btn-call-icon">📞</span>
   Appeler maintenant
 </a>
@@ -1186,21 +1264,32 @@ footer { background: #02040A; border-top: 1px solid var(--border); padding: 5.5r
     <li><a href="#zone">Zone</a></li>
     <li><a href="#faq">FAQ</a></li>
   </ul>
-  <a href="#contact" class="nav-cta"><span>
+  <a href="#contact" class="nav-cta" data-cursor-label="Contact"><span>
     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
     Audit gratuit
   </span></a>
+</nav>
+
+<!-- ═══ MINI SOMMAIRE ═══ -->
+<nav id="mini-toc" aria-label="Sommaire">
+  <a href="#services" data-cursor-label="Aller"><span class="toc-label">Services</span><span class="toc-dot"></span></a>
+  <a href="#approche" data-cursor-label="Aller"><span class="toc-label">Approche</span><span class="toc-dot"></span></a>
+  <a href="#pourquoi" data-cursor-label="Aller"><span class="toc-label">Pourquoi nous</span><span class="toc-dot"></span></a>
+  <a href="#processus" data-cursor-label="Aller"><span class="toc-label">Méthode</span><span class="toc-dot"></span></a>
+  <a href="#zone" data-cursor-label="Aller"><span class="toc-label">Zone</span><span class="toc-dot"></span></a>
+  <a href="#propos" data-cursor-label="Aller"><span class="toc-label">À propos</span><span class="toc-dot"></span></a>
+  <a href="#faq" data-cursor-label="Aller"><span class="toc-label">FAQ</span><span class="toc-dot"></span></a>
+  <a href="#contact" data-cursor-label="Aller"><span class="toc-label">Contact</span><span class="toc-dot"></span></a>
 </nav>
 
 <!-- ═══ HERO ═══ -->
 <section class="hero">
   <div class="hero-video-wrap">
     <div class="hero-mesh-fallback"></div>
-    <!-- Videos loop: Metz at night, luxury interior, Moselle nature -->
-    <video class="hero-video" id="hero-video" autoplay muted loop playsinline poster="">
-      <source src="https://assets.mixkit.co/videos/preview/mixkit-aerial-view-of-a-city-at-night-11-large.mp4" type="video/mp4">
-      <source src="https://assets.mixkit.co/videos/preview/mixkit-luxury-living-room-41-large.mp4" type="video/mp4">
-    </video>
+    <!-- Trio de vidéos en boucle : ville la nuit, intérieur cosy, nature en Moselle -->
+    <video class="hero-video" data-vid="0" autoplay muted loop playsinline preload="auto"></video>
+    <video class="hero-video" data-vid="1" muted loop playsinline preload="auto"></video>
+    <video class="hero-video" data-vid="2" muted loop playsinline preload="auto"></video>
   </div>
   <div class="hero-grain"></div>
   <div class="hero-ring hero-ring-1"></div>
@@ -1222,6 +1311,7 @@ footer { background: #02040A; border-top: 1px solid var(--border); padding: 5.5r
               <span class="hero-rotate-word">qui performe.</span>
               <span class="hero-rotate-word">transparente.</span>
               <span class="hero-rotate-word">sur mesure.</span>
+              <span class="hero-rotate-word">7 jours sur 7.</span>
               <span class="hero-rotate-word">nouvelle génération.</span>
             </span>
           </span>
@@ -1233,7 +1323,7 @@ footer { background: #02040A; border-top: 1px solid var(--border); padding: 5.5r
           Demander un audit gratuit
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
-        <a href="#services" class="btn-secondary" data-magnetic>Découvrir nos services</a>
+        <a href="#services" class="btn-secondary" data-magnetic data-cursor-label="Voir">Découvrir nos services</a>
       </div>
     </div>
 
@@ -1339,7 +1429,7 @@ footer { background: #02040A; border-top: 1px solid var(--border); padding: 5.5r
       <div class="platform-pill"><span class="platform-dot" style="background:#003580"></span>Booking.com</div>
       <div class="platform-pill"><span class="platform-dot" style="background:#E7711B"></span>Abritel</div>
       <div class="platform-pill"><span class="platform-dot" style="background:#00A9CE"></span>Expedia</div>
-      <div class="platform-pill"><span class="platform-dot" style="background:#C8A84B"></span>& autres</div>
+      <div class="platform-pill"><span class="platform-dot" style="background:#C8A84B"></span>&amp; autres</div>
     </div>
   </div>
 </div>
@@ -1399,7 +1489,7 @@ footer { background: #02040A; border-top: 1px solid var(--border); padding: 5.5r
       </div>
       <div class="compare-row">
         <div class="compare-cell feature">Optimisation des annonces</div>
-        <div class="compare-cell rs"><span class="compare-icon-yes">✓</span>Analyse continue & amélioration pro</div>
+        <div class="compare-cell rs"><span class="compare-icon-yes">✓</span>Analyse continue &amp; amélioration pro</div>
         <div class="compare-cell"><span class="compare-icon-no">✗</span>Rarement mis à jour</div>
       </div>
       <div class="compare-row">
@@ -1409,7 +1499,7 @@ footer { background: #02040A; border-top: 1px solid var(--border); padding: 5.5r
       </div>
       <div class="compare-row">
         <div class="compare-cell feature">Gestion des incidents</div>
-        <div class="compare-cell rs"><span class="compare-icon-yes">✓</span>Interlocuteur unique & réactif</div>
+        <div class="compare-cell rs"><span class="compare-icon-yes">✓</span>Interlocuteur unique &amp; réactif</div>
         <div class="compare-cell"><span class="compare-icon-meh">~</span>Vous gérez seul chaque problème</div>
       </div>
       <div class="compare-row">
@@ -1528,12 +1618,12 @@ footer { background: #02040A; border-top: 1px solid var(--border); padding: 5.5r
       <h2 class="serif word-reveal rev-left">Basés en <em>Moselle</em>,<br>à votre service.</h2>
       <p class="section-lead rev-left" style="margin-bottom:2.5rem">Nous intervenons sur l'ensemble du département de la Moselle et ses alentours, avec une connaissance fine du marché local et des spécificités touristiques de la région.</p>
       <div class="zone-list">
-        <div class="zone-item rev-left"><span class="zone-pin">📍</span>Metz &amp; agglomération</div>
-        <div class="zone-item rev-left"><span class="zone-pin">📍</span>Thionville &amp; vallée de la Moselle</div>
-        <div class="zone-item rev-left"><span class="zone-pin">📍</span>Sarreguemines &amp; Est mosellan</div>
-        <div class="zone-item rev-left"><span class="zone-pin">📍</span>Forbach &amp; bassin houiller</div>
-        <div class="zone-item rev-left"><span class="zone-pin">📍</span>Sarrebourg &amp; Pays de Phalsbourg</div>
-        <div class="zone-item rev-left"><span class="zone-pin">📍</span>Ensemble du département 57</div>
+        <div class="zone-item rev-left" data-lat="49.1193" data-lng="6.1757" data-zoom="11"><span class="zone-pin">📍</span>Saint-Avold &amp; agglomération</div>
+        <div class="zone-item rev-left" data-lat="49.3579" data-lng="6.1681" data-zoom="11"><span class="zone-pin">📍</span>Hayange &amp; vallée de la Moselle</div>
+        <div class="zone-item rev-left" data-lat="49.1103" data-lng="7.0648" data-zoom="11"><span class="zone-pin">📍</span>Bitche &amp; Est mosellan</div>
+        <div class="zone-item rev-left" data-lat="49.1903" data-lng="6.8956" data-zoom="11"><span class="zone-pin">📍</span>Freyming-Merlebach &amp; bassin houiller</div>
+        <div class="zone-item rev-left" data-lat="48.7333" data-lng="7.0500" data-zoom="11"><span class="zone-pin">📍</span>Dieuze &amp; Pays de Phalsbourg</div>
+        <div class="zone-item rev-left" data-lat="49.0500" data-lng="6.5000" data-zoom="9"><span class="zone-pin">📍</span>Ensemble du département 57</div>
       </div>
     </div>
     <div class="map-right">
@@ -1553,7 +1643,7 @@ footer { background: #02040A; border-top: 1px solid var(--border); padding: 5.5r
       <div>
         <div class="section-tag rev-left"><span class="section-tag-bar"></span>À propos</div>
         <h2 class="serif word-reveal rev-left">Notre <em>vision</em></h2>
-        <blockquote class="about-quote rev-left">"La gestion locative courte durée doit être plus simple, plus transparente et plus performante pour les propriétaires."</blockquote>
+        <blockquote class="about-quote rev-left">La gestion locative courte durée doit être plus simple, plus transparente et plus performante pour les propriétaires.</blockquote>
         <p class="about-body rev-left">Notre mission est d'apporter une approche moderne de l'exploitation des locations saisonnières en Moselle, grâce à une organisation rigoureuse et une attention particulière portée à l'expérience voyageur.<br><br>Nous croyons que chaque propriétaire mérite un accompagnement à la hauteur de son investissement — sans compromis sur la qualité ni sur la transparence.</p>
         <div class="about-signature rev-left">
           <div class="about-sig-line"></div>
@@ -1583,43 +1673,43 @@ footer { background: #02040A; border-top: 1px solid var(--border); padding: 5.5r
     <h2 class="serif word-reveal rev-up" style="margin-bottom:4rem">Questions <em>fréquentes</em></h2>
     <div class="faq-layout">
       <div class="faq-list rev-left">
-        <div class="faq-item">
-          <button class="faq-q">
+        <div class="faq-item open">
+          <button class="faq-q" aria-expanded="true">
             Combien coûte votre service de gestion ?
             <span class="faq-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
           </button>
           <div class="faq-a">Nos tarifs sont construits sur mesure selon le type de bien, le volume d'activité et les services souhaités. Contactez-nous pour obtenir une proposition personnalisée — l'audit initial est totalement gratuit et sans engagement.</div>
         </div>
         <div class="faq-item">
-          <button class="faq-q">
+          <button class="faq-q" aria-expanded="false">
             Je gère déjà mes annonces moi-même, pourquoi faire appel à vous ?
             <span class="faq-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
           </button>
           <div class="faq-a">Gérer soi-même demande une disponibilité permanente, une expertise en optimisation tarifaire, en rédaction d'annonces et en gestion des situations complexes. Nous libérons votre temps tout en maximisant les performances de votre bien grâce à notre expertise et à notre approche data.</div>
         </div>
         <div class="faq-item">
-          <button class="faq-q">
+          <button class="faq-q" aria-expanded="false">
             Quelles plateformes gérez-vous ?
             <span class="faq-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
           </button>
           <div class="faq-a">Nous gérons toutes les grandes plateformes : Airbnb, Booking.com, Abritel (VRBO), Expedia et d'autres selon votre positionnement. Nous synchronisons les calendriers pour éviter tout double booking.</div>
         </div>
         <div class="faq-item">
-          <button class="faq-q">
+          <button class="faq-q" aria-expanded="false">
             Restez-vous informé de tout ce qui se passe dans mon logement ?
             <span class="faq-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
           </button>
           <div class="faq-a">Absolument. Vous recevez des rapports réguliers et nous vous informons de tout événement notable. La transparence est au cœur de notre approche — vous gardez une visibilité totale sur votre bien.</div>
         </div>
         <div class="faq-item">
-          <button class="faq-q">
+          <button class="faq-q" aria-expanded="false">
             Comment se déroule l'audit gratuit ?
             <span class="faq-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
           </button>
           <div class="faq-a">Envoyez-nous le lien de votre annonce par email ou contactez-nous directement. Nous analysons le titre, les photos, la description et le positionnement tarifaire, puis vous remettons nos recommandations concrètes — le tout gratuitement et sous 48h.</div>
         </div>
         <div class="faq-item">
-          <button class="faq-q">
+          <button class="faq-q" aria-expanded="false">
             Intervenez-vous uniquement en Moselle ?
             <span class="faq-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span>
           </button>
@@ -1633,21 +1723,21 @@ footer { background: #02040A; border-top: 1px solid var(--border); padding: 5.5r
         </div>
         <div class="faq-visual-body">
           <div class="faq-contact-links">
-            <a href="mailto:delio.casciu10@gmail.com" class="faq-contact-link">
+            <a href="mailto:delio.casciu10@gmail.com" class="faq-contact-link" data-cursor-label="Écrire">
               <div class="faq-contact-icon">✉️</div>
               <div>
                 <div class="faq-contact-text-label">Email</div>
                 <div class="faq-contact-text-val">delio.casciu10@gmail.com</div>
               </div>
             </a>
-            <a href="tel:+33783367640" class="faq-contact-link">
+            <a href="tel:+33783367640" class="faq-contact-link" data-cursor-label="Appeler">
               <div class="faq-contact-icon">📞</div>
               <div>
                 <div class="faq-contact-text-label">Téléphone</div>
                 <div class="faq-contact-text-val">+33 7 83 36 76 40</div>
               </div>
             </a>
-            <a href="#contact" class="faq-contact-link">
+            <a href="#contact" class="faq-contact-link" data-cursor-label="Audit">
               <div class="faq-contact-icon">📋</div>
               <div>
                 <div class="faq-contact-text-label">Audit gratuit</div>
@@ -1665,4 +1755,503 @@ footer { background: #02040A; border-top: 1px solid var(--border); padding: 5.5r
 <section id="contact" class="section audit-section">
   <div class="audit-glow"></div>
   <div class="audit-inner">
-    <div class="section-tag rev-up"><span class="section-tag-bar"></span>Offre de
+    <div class="section-tag rev-up"><span class="section-tag-bar"></span>Offre de lancement</div>
+    <h2 class="serif word-reveal rev-up" style="margin-bottom:1.5rem">Un audit gratuit, <em>sans engagement</em></h2>
+    <p class="section-lead rev-up" style="margin-bottom:4rem; max-width:620px">Envoyez-nous le lien de votre annonce et recevez sous 48h une analyse complète : positionnement tarifaire, qualité des photos, description et axes d'amélioration concrets pour votre bien en Moselle.</p>
+
+    <div class="audit-items-grid rev-up">
+      <div class="audit-item">
+        <span class="audit-item-icon">📸</span>
+        <div class="audit-item-label">Analyse photos &amp; description</div>
+      </div>
+      <div class="audit-item">
+        <span class="audit-item-icon">💶</span>
+        <div class="audit-item-label">Positionnement tarifaire</div>
+      </div>
+      <div class="audit-item">
+        <span class="audit-item-icon">⭐</span>
+        <div class="audit-item-label">Revue des avis &amp; réputation</div>
+      </div>
+      <div class="audit-item">
+        <span class="audit-item-icon">📋</span>
+        <div class="audit-item-label">Recommandations sous 48h</div>
+      </div>
+    </div>
+
+    <div class="contact-row rev-up">
+      <a href="mailto:delio.casciu10@gmail.com?subject=Demande%20d%27audit%20gratuit%20-%20Renova%20Stay&body=Bonjour%2C%0A%0AJe%20souhaite%20recevoir%20un%20audit%20gratuit%20de%20mon%20annonce.%0A%0ALien%20%3A%20" class="contact-card" data-cursor-label="Écrire">
+        <div class="contact-icon">✉️</div>
+        <div>
+          <div class="contact-label">Email</div>
+          <div class="contact-value">delio.casciu10@gmail.com</div>
+        </div>
+      </a>
+      <a href="tel:+33783367640" class="contact-card" data-cursor-label="Appeler">
+        <div class="contact-icon">📞</div>
+        <div>
+          <div class="contact-label">Téléphone</div>
+          <div class="contact-value">+33 7 83 36 76 40</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="audit-cta-row rev-up">
+      <a href="mailto:delio.casciu10@gmail.com?subject=Demande%20d%27audit%20gratuit%20-%20Renova%20Stay&body=Bonjour%2C%0A%0AJe%20souhaite%20recevoir%20un%20audit%20gratuit%20de%20mon%20annonce.%0A%0ALien%20%3A%20" class="btn-primary" data-magnetic data-cursor-label="Audit">
+        Demander mon audit gratuit
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <p class="audit-note">Réponse sous 48h · Sans engagement · Confidentialité garantie</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="footer-logo">Renova<span>·</span>Stay</div>
+      <p class="footer-tagline">Gestion locative courte durée nouvelle génération, basée en Moselle. Performance, transparence, expérience voyageur.</p>
+      <div class="footer-zone">📍 Moselle (57) · Grand Est, France</div>
+    </div>
+    <div>
+      <div class="footer-col-title">Navigation</div>
+      <div class="footer-links">
+        <a href="#services">Services</a>
+        <a href="#approche">Approche</a>
+        <a href="#pourquoi">Pourquoi nous</a>
+        <a href="#processus">Méthode</a>
+        <a href="#zone">Zone</a>
+        <a href="#faq">FAQ</a>
+      </div>
+    </div>
+    <div>
+      <div class="footer-col-title">Plateformes</div>
+      <div class="footer-links">
+        <a href="#services">Airbnb</a>
+        <a href="#services">Booking.com</a>
+        <a href="#services">Abritel</a>
+        <a href="#services">Expedia</a>
+      </div>
+    </div>
+    <div>
+      <div class="footer-col-title">Contact</div>
+      <a href="mailto:delio.casciu10@gmail.com" class="footer-contact-email">✉️ delio.casciu10@gmail.com</a>
+      <a href="tel:+33783367640" class="footer-contact-phone">📞 +33 7 83 36 76 40</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 Renova Stay. Tous droits réservés.</div>
+    <div class="footer-legal">
+      <a href="#">Mentions légales</a>
+      <a href="#">Politique de confidentialité</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   PAGE LOADER
+═══════════════════════════════════════════════════════════════ */
+(function () {
+  const bar = document.getElementById('loader-bar');
+  const pct = document.getElementById('loader-pct');
+  const loader = document.getElementById('page-loader');
+  let progress = 0;
+
+  function tick() {
+    const target = document.readyState === 'complete' ? 100 : 88;
+    progress += (target - progress) * 0.12 + 0.4;
+    if (progress > 100) progress = 100;
+    bar.style.width = progress + '%';
+    pct.textContent = Math.round(progress) + '%';
+    if (progress < 100) {
+      requestAnimationFrame(tick);
+    } else {
+      setTimeout(() => loader.classList.add('loaded'), 250);
+    }
+  }
+  requestAnimationFrame(tick);
+  window.addEventListener('load', () => { progress = Math.max(progress, 92); });
+  // Safety net: never block the page for more than 4s
+  setTimeout(() => loader.classList.add('loaded'), 4000);
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   CUSTOM CURSOR
+═══════════════════════════════════════════════════════════════ */
+(function () {
+  const isTouch = window.matchMedia('(pointer: coarse)').matches;
+  if (isTouch) return;
+
+  const dot = document.getElementById('cursor-dot');
+  const ring = document.getElementById('cursor-ring');
+  const label = document.getElementById('cursor-label');
+  let mouseX = -100, mouseY = -100;
+  let ringX = -100, ringY = -100;
+
+  window.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    dot.style.transform = `translate(${mouseX}px, ${mouseY}px) translate(-50%,-50%)`;
+    label.style.transform = `translate(${mouseX}px, ${mouseY + 26}px) translate(-50%, 0)`;
+  });
+
+  function raf() {
+    ringX += (mouseX - ringX) * 0.18;
+    ringY += (mouseY - ringY) * 0.18;
+    ring.style.transform = `translate(${ringX}px, ${ringY}px) translate(-50%,-50%)`;
+    requestAnimationFrame(raf);
+  }
+  raf();
+
+  document.addEventListener('mousedown', () => document.body.classList.add('cursor-click'));
+  document.addEventListener('mouseup', () => document.body.classList.remove('cursor-click'));
+
+  const hoverTargets = document.querySelectorAll('a, button, .tilt-card, [data-hover], .zone-item, .faq-q');
+  hoverTargets.forEach(el => {
+    el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+    el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+  });
+
+  const ctaTargets = document.querySelectorAll('[data-cursor-label]');
+  ctaTargets.forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      document.body.classList.add('cursor-cta');
+      label.textContent = el.getAttribute('data-cursor-label') || 'Explorer';
+    });
+    el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-cta'));
+  });
+
+  const videoSection = document.querySelector('.hero');
+  if (videoSection) {
+    videoSection.addEventListener('mouseenter', () => document.body.classList.add('cursor-video'));
+    videoSection.addEventListener('mouseleave', () => document.body.classList.remove('cursor-video'));
+  }
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   PARTICLES CANVAS
+═══════════════════════════════════════════════════════════════ */
+(function () {
+  const canvas = document.getElementById('particles-canvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, particles = [];
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const COUNT = window.innerWidth < 768 ? 24 : 50;
+  for (let i = 0; i < COUNT; i++) {
+    particles.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: Math.random() * 1.6 + 0.4,
+      vx: (Math.random() - 0.5) * 0.12,
+      vy: (Math.random() - 0.5) * 0.12,
+      o: Math.random() * 0.5 + 0.1
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0) p.x = w;
+      if (p.x > w) p.x = 0;
+      if (p.y < 0) p.y = h;
+      if (p.y > h) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200,168,75,${p.o})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   MAGNETIC BUTTONS
+═══════════════════════════════════════════════════════════════ */
+(function () {
+  const isTouch = window.matchMedia('(pointer: coarse)').matches;
+  if (isTouch) return;
+
+  document.querySelectorAll('[data-magnetic]').forEach(el => {
+    el.addEventListener('mousemove', (e) => {
+      const rect = el.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      el.style.transform = `translate(${x * 0.18}px, ${y * 0.3}px)`;
+    });
+    el.addEventListener('mouseleave', () => { el.style.transform = ''; });
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   NAV SCROLL STATE
+═══════════════════════════════════════════════════════════════ */
+(function () {
+  const nav = document.getElementById('main-nav');
+  function onScroll() {
+    nav.classList.toggle('scrolled', window.scrollY > 40);
+  }
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   WORD-BY-WORD SPLIT (for .word-reveal headings)
+═══════════════════════════════════════════════════════════════ */
+(function () {
+  document.querySelectorAll('.word-reveal').forEach(el => {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+    const textNodes = [];
+    let node;
+    while ((node = walker.nextNode())) textNodes.push(node);
+
+    textNodes.forEach(textNode => {
+      const words = textNode.textContent.split(/(\s+)/);
+      const frag = document.createDocumentFragment();
+      words.forEach((word, i) => {
+        if (word.trim() === '') {
+          frag.appendChild(document.createTextNode(word));
+        } else {
+          const span = document.createElement('span');
+          span.className = 'word';
+          span.textContent = word;
+          span.style.transitionDelay = (i * 0.025) + 's';
+          frag.appendChild(span);
+          frag.appendChild(document.createTextNode(' '));
+        }
+      });
+      textNode.parentNode.replaceChild(frag, textNode);
+    });
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   MINI SOMMAIRE — ACTIVE LINK ON SCROLL
+═══════════════════════════════════════════════════════════════ */
+(function () {
+  const links = document.querySelectorAll('#mini-toc a');
+  if (!links.length) return;
+  const sections = Array.from(links).map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+
+  const setActive = (id) => {
+    links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) setActive(entry.target.id);
+    });
+  }, { rootMargin: '-45% 0px -45% 0px', threshold: 0 });
+
+  sections.forEach(sec => observer.observe(sec));
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   SCROLL REVEAL
+═══════════════════════════════════════════════════════════════ */
+
+(function () {
+  const targets = document.querySelectorAll('.rev-up, .rev-left, .rev-right, .rev-scale, .word-reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+
+  targets.forEach(el => observer.observe(el));
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   TILT CARDS
+═══════════════════════════════════════════════════════════════ */
+(function () {
+  const isTouch = window.matchMedia('(pointer: coarse)').matches;
+  if (isTouch) return;
+
+  document.querySelectorAll('.tilt-card').forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      card.style.transform = `perspective(900px) rotateY(${x * 4}deg) rotateX(${-y * 4}deg) translateY(-2px)`;
+    });
+    card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   FAQ ACCORDION
+═══════════════════════════════════════════════════════════════ */
+(function () {
+  document.querySelectorAll('.faq-item').forEach(item => {
+    const q = item.querySelector('.faq-q');
+    q.addEventListener('click', () => {
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(open => {
+        if (open !== item) {
+          open.classList.remove('open');
+          open.querySelector('.faq-q').setAttribute('aria-expanded', 'false');
+        }
+      });
+      item.classList.toggle('open', !isOpen);
+      q.setAttribute('aria-expanded', String(!isOpen));
+    });
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   AUDIT POPUP
+═══════════════════════════════════════════════════════════════ */
+(function () {
+  const popup = document.getElementById('audit-popup');
+  const closeBtn = document.getElementById('popup-close');
+  const STORAGE_KEY = 'rs-popup-dismissed';
+  let dismissed = false;
+
+  try { dismissed = sessionStorage.getItem(STORAGE_KEY) === '1'; } catch (e) {}
+
+  if (!dismissed) {
+    setTimeout(() => popup.classList.add('show'), 9000);
+  }
+
+  closeBtn.addEventListener('click', () => {
+    popup.classList.remove('show');
+    try { sessionStorage.setItem(STORAGE_KEY, '1'); } catch (e) {}
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   HERO VIDEO ROTATION (3-video loop with crossfade)
+═══════════════════════════════════════════════════════════════ */
+(function () {
+  const sources = [
+    "https://assets.mixkit.co/videos/preview/mixkit-aerial-shot-of-a-city-with-the-river-and-skyscrapers-32933-large.mp4",
+    "https://assets.mixkit.co/videos/preview/mixkit-modern-living-room-interior-with-a-tv-on-a-tv-stand-39880-large.mp4",
+    "https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-1080p-large.mp4"
+  ];
+  const videos = Array.from(document.querySelectorAll('.hero-video'));
+  if (!videos.length) return;
+
+  videos.forEach((v, i) => {
+    v.src = sources[i % sources.length];
+    v.addEventListener('error', () => { v.style.display = 'none'; });
+  });
+
+  let current = 0;
+  videos[0].classList.add('active');
+  videos[0].play().catch(() => {});
+
+  function next() {
+    const incoming = (current + 1) % videos.length;
+    const outgoing = current;
+    videos[incoming].currentTime = 0;
+    videos[incoming].play().catch(() => {});
+    videos[incoming].classList.add('active');
+    videos[outgoing].classList.remove('active');
+    current = incoming;
+  }
+
+  videos.forEach(v => {
+    v.addEventListener('ended', () => {
+      if (v === videos[current]) next();
+    });
+  });
+
+  // Fallback rotation in case durations are short / autoplay blocked
+  setInterval(() => {
+    if (videos[current].paused) next();
+  }, 9000);
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   LEAFLET MAP — MOSELLE
+═══════════════════════════════════════════════════════════════ */
+(function () {
+  const mapEl = document.getElementById('leaflet-map');
+  if (!mapEl || typeof L === 'undefined') return;
+
+  const center = [49.05, 6.55];
+  const map = L.map('leaflet-map', {
+    zoomControl: false,
+    scrollWheelZoom: false,
+    attributionControl: true
+  }).setView(center, 9);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    maxZoom: 18
+  }).addTo(map);
+
+  const goldIcon = (main) => L.divIcon({
+    className: '',
+    html: `<div class="rs-marker${main ? ' rs-marker-main' : ''}"></div>`,
+    iconSize: main ? [22, 22] : [16, 16]
+  });
+
+  const zones = [
+    { name: 'Saint-Avold & agglomération', lat: 49.1193, lng: 6.1757, main: true },
+    { name: 'Hayange & vallée de la Moselle', lat: 49.3579, lng: 6.1681 },
+    { name: 'Bitche & Est mosellan', lat: 49.1103, lng: 7.0648 },
+    { name: 'Freyming-Merlebach & bassin houiller', lat: 49.1903, lng: 6.8956 },
+    { name: 'Dieuze & Pays de Phalsbourg', lat: 48.7333, lng: 7.0500 }
+  ];
+
+  const markers = {};
+  zones.forEach(z => {
+    const marker = L.marker([z.lat, z.lng], { icon: goldIcon(z.main) }).addTo(map);
+    marker.bindPopup(`<strong>${z.name}</strong><br>Zone Renova Stay`);
+    markers[z.name] = marker;
+  });
+
+  // Subtle outline of the overall Moselle zone
+  L.circle(center, {
+    radius: 45000,
+    color: '#C8A84B',
+    weight: 1,
+    fillColor: '#C8A84B',
+    fillOpacity: 0.04,
+    dashArray: '4 6'
+  }).addTo(map);
+
+  // Re-enable scroll zoom only once the user interacts with the map
+  map.on('focus', () => map.scrollWheelZoom.enable());
+  map.on('blur', () => map.scrollWheelZoom.disable());
+
+  // Sync zone list clicks with the map
+  document.querySelectorAll('.zone-item[data-lat]').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.zone-item').forEach(z => z.classList.remove('active'));
+      item.classList.add('active');
+      const lat = parseFloat(item.dataset.lat);
+      const lng = parseFloat(item.dataset.lng);
+      const zoom = parseInt(item.dataset.zoom, 10) || 10;
+      map.flyTo([lat, lng], zoom, { duration: 1.1 });
+
+      const name = item.textContent.trim();
+      Object.keys(markers).forEach(key => {
+        if (name.includes(key) || key.includes(name)) markers[key].openPopup();
+      });
+    });
+  });
+
+  // Fix sizing issues if map loads inside an initially-hidden layout
+  setTimeout(() => map.invalidateSize(), 400);
+  window.addEventListener('resize', () => map.invalidateSize());
+})();
+</script>
+</body>
+</html>
